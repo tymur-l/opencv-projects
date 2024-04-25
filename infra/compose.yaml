@@ -1,0 +1,27 @@
+name: "opencv-projects"
+
+services:
+  jupyter:
+    image: "opencv-projects:latest"
+    build:
+      context: "image"
+      dockerfile: "Containerfile"
+    container_name: "opencv-projects"
+    user: "root"
+    environment:
+      NB_USER: "opencv"
+      CHOWN_HOME: "yes"
+    working_dir: "/home/opencv"
+    ports:
+      - "8888:8888"
+    volumes:
+      - "./src:/home/opencv/src"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities:
+                - "nvidia-compute"
+                - "utility"
+              driver: "nvidia"
+              count: "all"

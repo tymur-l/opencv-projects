@@ -1,0 +1,19 @@
+FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-19 as jupyter-base
+
+USER root
+
+RUN <<EOF
+apt update -y
+apt install -y --no-install-recommends libpng-dev libjpeg-dev libtiff-dev python3-opencv libegl-dev
+EOF
+
+USER ${NB_UID}
+
+FROM jupyter-base
+
+COPY ./conda-requirements.txt /tmp/requirements.txt
+
+RUN mamba install --yes --file /tmp/requirements.txt && \
+  mamba clean --all -f -y && \
+  fix-permissions "${CONDA_DIR}" && \
+  fix-permissions "/home/${NB_USER}"
