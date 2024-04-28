@@ -45,7 +45,7 @@ sudo nerdctl compose -f="./infra/compose.build.yaml" up -d
 > ```shell
 > sudo nerdctl compose -f="./infra/compose.build.yaml" down
 > ```
-> And run the container manually (thankfully, the image has already been built so it won't be rebuild):
+> And run the container manually (thankfully, the image has already been built so it won't be rebuilt):
 > ```shell
 > sudo nerdctl run -dt --gpus="all" --name="opencv-python-build" --volume="${PWD}/infra/opencv-build:/home/opencv/build" --volume="${PWD}/infra/image/build/scripts:/home/opencv/scripts" opencv-python-build:latest
 > ```
@@ -57,7 +57,9 @@ This will start a build container. The container has 2 attached volumes:
 - `./opencv-build:/home/opencv/build` - after the build is finished you can copy the outputs to `/home/opencv/build` inside the container and they will appear in `infra/opencv-build` directory. This directory is also excluded from git.
 - `./build/scripts:/home/opencv/scripts` - contains scripts to facilitate build activities. E.g. `build-opencv-python.sh` will set build flags and start the build. You can change this script, if you want to compile opencv with different flags.
 
-After this you can login to the container and run:
+### Login to the build container
+
+[After the build container has been started](#start-the-build-container), you can login to the container:
 
 ```shell
 sudo nerdctl exec -it opencv-python-build /bin/bash
@@ -65,7 +67,7 @@ sudo nerdctl exec -it opencv-python-build /bin/bash
 
 ### Build
 
-[Inside the build container](#start-the-build-container) run the build with:
+[Inside the build container](#login-to-the-build-container) run build with:
 
 ```shell
 ~/scripts/build-opencv-python.sh
