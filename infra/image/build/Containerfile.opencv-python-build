@@ -38,7 +38,7 @@ apt install -y --no-install-recommends \
   "libpostproc-dev=${FFMPEG_VERSION}"
 EOF
 
-# Install pip and ensure its updated
+# Ensure pip is updated
 RUN pip install --upgrade pip
 
 ARG BUILD_USER="opencv"

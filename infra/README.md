@@ -2,6 +2,8 @@
 
 ## Build OpenCV from sources with CUDA
 
+Based on https://github.com/opencv/opencv-python.
+
 ### Limitations
 
 - Supports only X64 for now
