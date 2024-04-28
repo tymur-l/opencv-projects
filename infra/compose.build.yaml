@@ -1,0 +1,25 @@
+name: "opencv-python-build"
+
+services:
+  opencv-build:
+    image: "opencv-python-build:latest"
+    build:
+      context: "./image/build"
+      dockerfile: "Containerfile.opencv-python-build"
+    container_name: "opencv-python-build"
+    # Does not work with nerdctl (https://github.com/containerd/nerdctl/issues/590)
+    # tty: true
+    # Don't let the container exit immediately after it is started
+    command: "tail -F /dev/null"
+    volumes:
+      - "./opencv-build:/home/opencv/build"
+      - "./image/build/scripts:/home/opencv/scripts"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities:
+                - "nvidia-compute"
+                - "utility"
+              driver: "nvidia"
+              count: "all"

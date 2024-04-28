@@ -1,0 +1,69 @@
+FROM nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04 as cuda
+
+# Copy Nvidia Codec SDK
+COPY ./deps/nvidia-codec-sdk/Interface/*.h /usr/local/cuda/include
+COPY ./deps/nvidia-codec-sdk/Lib/linux/stubs/x86_64/*.so /usr/local/cuda/lib64
+
+FROM cuda as opencv-cuda-python-build
+
+USER root
+
+# Install build dependencies
+RUN <<EOF
+export FFMPEG_VERSION="7:4.4.2-0ubuntu0.22.04.1"
+export PYTHON_VERSION="3.10.6-1~22.04"
+
+apt update -y
+apt install -y --no-install-recommends \
+  python3="${PYTHON_VERSION}" \
+  python3-dev="${PYTHON_VERSION}" \
+  python3-pip=22.0.2+dfsg-1ubuntu0.4 \
+  python3-numpy=1:1.21.5-1ubuntu22.04.1 \
+  \
+  cmake=3.22.1-1ubuntu1.22.04.2 g++=4:11.2.0-1ubuntu1 gcc=4:11.2.0-1ubuntu1 ninja-build=1.10.1-1 \
+  git=1:2.34.1-1ubuntu1.9 \
+  \
+  libpng-dev=1.6.37-3build5 libjpeg-dev=8c-2ubuntu10 libopenexr-dev=2.5.7-1 libtiff-dev=4.3.0-6ubuntu0.8 \
+  libwebp-dev=1.2.2-2ubuntu0.22.04.2 \
+  \
+  libgstreamer-plugins-base1.0-dev=1.20.1-1ubuntu0.1 libgstreamer1.0-dev=1.20.3-0ubuntu1 \
+  \
+  "libavutil-dev=${FFMPEG_VERSION}" \
+  "libavcodec-dev=${FFMPEG_VERSION}" \
+  "libavformat-dev=${FFMPEG_VERSION}" \
+  "libavdevice-dev=${FFMPEG_VERSION}" \
+  "libavfilter-dev=${FFMPEG_VERSION}" \
+  "libswscale-dev=${FFMPEG_VERSION}" \
+  "libswresample-dev=${FFMPEG_VERSION}" \
+  "libpostproc-dev=${FFMPEG_VERSION}"
+EOF
+
+# Install pip and ensure its updated
+RUN pip install --upgrade pip
+
+ARG BUILD_USER="opencv"
+RUN adduser "${BUILD_USER}"
+
+USER "${BUILD_USER}"
+
+WORKDIR "/home/${BUILD_USER}"
+
+# Clone OpenCV sources and checkout proper versions
+RUN <<EOF
+git clone --depth 1 --branch '80' 'https://github.com/opencv/opencv-python.git'
+cd opencv-python
+
+git submodule init
+
+OPEN_CV_VERSION='4.9.0'
+git submodule set-branch "${OPEN_CV_VERSION}" --branch -- opencv
+git submodule set-branch "${OPEN_CV_VERSION}" --branch -- opencv_contrib
+git submodule set-branch "${OPEN_CV_VERSION}" --branch -- opencv_extra
+
+git submodule update --depth 1 --single-branch
+EOF
+
+WORKDIR "/home/${BUILD_USER}/opencv-python"
+
+VOLUME /home/${BUILD_USER}/scripts
+VOLUME /home/${BUILD_USER}/build
