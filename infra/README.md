@@ -5,7 +5,7 @@
 ### Limitations
 
 - Supports only X64 for now
-- Requires CUDA 8 ([OpenCV 4.9.0 does not support CUDA 9](https://github.com/opencv/opencv/issues/24983))
+- Requires cuDNN 8 ([OpenCV 4.9.0 does not support cuDNN 9](https://github.com/opencv/opencv/issues/24983))
 
 ### Prerequisites
 
