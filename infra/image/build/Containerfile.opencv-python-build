@@ -1,3 +1,11 @@
+FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-19 as jupyter-base
+
+# Install
+RUN mamba install --yes 'glib == 2.80.0' && \
+  mamba clean --all -f -y && \
+  fix-permissions "${CONDA_DIR}" && \
+  fix-permissions "/home/${NB_USER}"
+
 FROM nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04 as cuda
 
 # Copy Nvidia Codec SDK
@@ -7,6 +15,24 @@ COPY ./deps/nvidia-codec-sdk/Lib/linux/stubs/x86_64/*.so /usr/local/cuda/lib64
 FROM cuda as opencv-cuda-python-build
 
 USER root
+
+RUN <<EOF
+apt update
+apt install -y --no-install-recommends software-properties-common
+EOF
+
+# Install python3.7
+RUN <<EOF
+export PYTHON_VERSION="3.7.17-1+jammy1"
+
+add-apt-repository -y ppa:deadsnakes/ppa
+apt update -y
+apt install -y --no-install-recommends \
+  python3.7="${PYTHON_VERSION}" \
+  python3.7-dev="${PYTHON_VERSION}" \
+  python3.7-distutils="${PYTHON_VERSION}" \
+  python3.7-gdbm="${PYTHON_VERSION}" \
+EOF
 
 # Install build dependencies
 RUN <<EOF
@@ -22,6 +48,7 @@ apt install -y --no-install-recommends \
   \
   cmake=3.22.1-1ubuntu1.22.04.2 g++=4:11.2.0-1ubuntu1 gcc=4:11.2.0-1ubuntu1 ninja-build=1.10.1-1 \
   git=1:2.34.1-1ubuntu1.9 \
+  rsync=3.2.7-0ubuntu0.22.04.2 \
   \
   libpng-dev=1.6.37-3build5 libjpeg-dev=8c-2ubuntu10 libopenexr-dev=2.5.7-1 libtiff-dev=4.3.0-6ubuntu0.8 \
   libwebp-dev=1.2.2-2ubuntu0.22.04.2 \
@@ -38,8 +65,21 @@ apt install -y --no-install-recommends \
   "libpostproc-dev=${FFMPEG_VERSION}"
 EOF
 
+# # Make python3.7 default
+# RUN rm -rf /usr/bin/python3 && ln -s /usr/bin/python3.7 /usr/bin/python3
+
 # Ensure pip is updated
 RUN pip install --upgrade pip
+
+# Copy anaconda's libgio in this container, so that when we use the lib
+# from the anaconda environment, it will not fail:
+# - https://github.com/opencv/opencv/issues/7940
+# - https://github.com/opencv/opencv/issues/19958
+RUN rm -rf \
+  /usr/lib/x86_64-linux-gnu/libgio-2.0.so \
+  /usr/lib/x86_64-linux-gnu/libgio-2.0.so.0 \
+  /usr/lib/x86_64-linux-gnu/libgio-2.0.so.0.7200.4
+COPY --from=jupyter-base --chown=root:root /opt/conda/lib/libgio-2.0.so.0.8000.0 /usr/lib/x86_64-linux-gnu/libgio-2.0.so.0.8000.0
 
 ARG BUILD_USER="opencv"
 RUN adduser "${BUILD_USER}"

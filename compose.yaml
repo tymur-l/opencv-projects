@@ -4,8 +4,8 @@ services:
   jupyter:
     image: "opencv-projects:latest"
     build:
-      context: "./infra/image/jupyter"
-      dockerfile: "Containerfile"
+      context: "./infra/image"
+      dockerfile: "./jupyter/Containerfile"
     container_name: "opencv-projects"
     user: "root"
     environment:

@@ -49,7 +49,7 @@ sudo nerdctl compose -f="./infra/compose.build.yaml" up -d
 > ```
 > And run the container manually (thankfully, the image has already been built so it won't be rebuilt):
 > ```shell
-> sudo nerdctl run -dt --gpus="all" --name="opencv-python-build" --volume="${PWD}/infra/opencv-build:/home/opencv/build" --volume="${PWD}/infra/image/build/scripts:/home/opencv/scripts" opencv-python-build:latest
+> sudo nerdctl run -dt --gpus="all" --name="opencv-python-build" --volume="${PWD}/infra/image/deps/opencv-build:/home/opencv/build" --volume="${PWD}/infra/image/build/scripts:/home/opencv/scripts" opencv-python-build:latest
 > ```
 
 > Add `--build` after `up` if you changed the `Conainerfile.opencv-python-build` and want to rebuild the image.
@@ -77,8 +77,39 @@ sudo nerdctl exec -it opencv-python-build /bin/bash
 
 ### Copy OpenCV build to the host
 
-<!-- TODO: copy specific files only -->
+Copy the built wheel:
+
+```shell
+cp opencv_*.whl ~/build/
+```
+
+Or, you can copy the whole build directory (it can reach 10Gb, so it's better to copy only wheel, because this is what is actually going to be used to install OpenCV):
 
 ```shell
 cp -R ./ ~/build/
+```
+
+## Jupyter image with OpenCV compiled for CUDA
+
+### Building jupyter image with CUDA OpenCV
+
+<!-- When you [have built OpenCV with CUDA](#build-opencv-from-sources-with-cuda), copy the resulting wheel to the `./infra/image/jupyter/deps` directory.
+
+```shell
+cp ./infra/opencv-build/opencv_*.whl ./infra/image/deps/
+```
+
+When jupyter container is built, OpenCV will be installed from that wheel. -->
+
+### Run Jupyter image with CUDA OpenCV
+
+- [ ] TODO: describe
+  - [ ] TODO: ensure that you have the OpenCV wheel build under `./infra/deps/opencv-build`
+
+```shell
+sudo nerdctl compose up -d
+```
+
+```shell
+sudo nerdctl run -d --gpus="all" --name="opencv-projects" -p="8888:8888" --volume="${PWD}/src:/home/opencv/src" opencv-projects:latest
 ```

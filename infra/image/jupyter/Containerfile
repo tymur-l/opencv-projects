@@ -3,17 +3,52 @@ FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-19 as jupyter-base
 USER root
 
 RUN <<EOF
+export FFMPEG_VERSION="7:4.4.2-0ubuntu0.22.04.1"
+
 apt update -y
-apt install -y --no-install-recommends libpng-dev libjpeg-dev libtiff-dev python3-opencv libegl-dev
+apt install -y --no-install-recommends \
+  libpng-dev=1.6.37-3build5 libjpeg-dev=8c-2ubuntu10 libopenexr-dev=2.5.7-1 libtiff-dev=4.3.0-6ubuntu0.8 \
+  libwebp-dev=1.2.2-2ubuntu0.22.04.2 \
+  \
+  libgstreamer-plugins-base1.0-dev=1.20.1-1ubuntu0.1 libgstreamer1.0-dev=1.20.3-0ubuntu1 \
+  \
+  "libavutil-dev=${FFMPEG_VERSION}" \
+  "libavcodec-dev=${FFMPEG_VERSION}" \
+  "libavformat-dev=${FFMPEG_VERSION}" \
+  "libavdevice-dev=${FFMPEG_VERSION}" \
+  "libavfilter-dev=${FFMPEG_VERSION}" \
+  "libswscale-dev=${FFMPEG_VERSION}" \
+  "libswresample-dev=${FFMPEG_VERSION}" \
+  "libpostproc-dev=${FFMPEG_VERSION}"
 EOF
+
+# Copy Nvidia Codec SDK
+COPY ./deps/nvidia-codec-sdk/Lib/linux/stubs/x86_64/*.so /usr/local/cuda/lib64/
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}/usr/local/cuda/lib64/"
+RUN echo "/usr/local/cuda/lib64" > /etc/ld.so.conf.d/nvidia-codec-sdk.conf
 
 USER ${NB_UID}
 
-FROM jupyter-base
-
-COPY ./conda-requirements.txt /tmp/requirements.txt
+COPY ./jupyter/conda-requirements.txt /tmp/requirements.txt
 
 RUN mamba install --yes --file /tmp/requirements.txt && \
   mamba clean --all -f -y && \
+  fix-permissions "${CONDA_DIR}" && \
+  fix-permissions "/home/${NB_USER}"
+
+# Copy nvidia lib installed by conda to be discovered by CUDA OpenCV
+USER root
+RUN cp /opt/conda/lib/libnppc.so.12 /opt/conda/lib/libnppial.so.12 /opt/conda/lib/libnppicc.so.12 \
+  /opt/conda/lib/libnppidei.so.12 /opt/conda/lib/libnppif.so.12 /opt/conda/lib/libnppig.so.12 \
+  /opt/conda/lib/libnppim.so.12 /opt/conda/lib/libnppist.so.12 /opt/conda/lib/libnppitc.so.12 \
+  \
+  /usr/local/cuda/lib64/
+USER ${NB_UID}
+
+# TODO: build produces wheel with cp310 abi tag instead of abi3, needs to be fixed
+COPY ./deps/opencv-build/opencv*.whl /tmp/
+
+# TODO: make it a conda package and install via mamba?
+RUN pip install --no-cache-dir /tmp/opencv*.whl && \
   fix-permissions "${CONDA_DIR}" && \
   fix-permissions "/home/${NB_USER}"
