@@ -49,7 +49,7 @@ sudo nerdctl compose -f="./infra/compose.build.yaml" up -d
 > ```
 > And run the container manually (thankfully, the image has already been built so it won't be rebuilt):
 > ```shell
-> sudo nerdctl run -dt --gpus="all" --name="opencv-python-build" --volume="${PWD}/infra/image/deps/opencv-build:/home/opencv/build" --volume="${PWD}/infra/image/build/scripts:/home/opencv/scripts" opencv-python-build:latest
+> sudo nerdctl run -dt --gpus="all" --name="opencv-python-build" --volume="${PWD}/infra/image/deps/opencv-build:/home/opencv/build" --volume="${PWD}/infra/image/build/scripts:/home/opencv/scripts" --volume="${PWD}/infra/image/build/data:/home/opencv/data" opencv-python-build:latest
 > ```
 
 > Add `--build` after `up` if you changed the `Conainerfile.opencv-python-build` and want to rebuild the image.
@@ -93,23 +93,22 @@ cp -R ./ ~/build/
 
 ### Building jupyter image with CUDA OpenCV
 
-<!-- When you [have built OpenCV with CUDA](#build-opencv-from-sources-with-cuda), copy the resulting wheel to the `./infra/image/jupyter/deps` directory.
+When you [have built OpenCV with CUDA](#build-opencv-from-sources-with-cuda), build jupyter container with OpenCV installed:
 
 ```shell
-cp ./infra/opencv-build/opencv_*.whl ./infra/image/deps/
+sudo nerdctl compose up --build
 ```
 
-When jupyter container is built, OpenCV will be installed from that wheel. -->
+When jupyter container is built, OpenCV CUDA build will be installed in the conda environment from that wheel. That is you can run `import cv2`.
 
 ### Run Jupyter image with CUDA OpenCV
 
-- [ ] TODO: describe
-  - [ ] TODO: ensure that you have the OpenCV wheel build under `./infra/deps/opencv-build`
+After you [built a jupyter image with CUDA OpenCV](#building-jupyter-image-with-cuda-opencv), you can start new container with the following command:
 
 ```shell
-sudo nerdctl compose up -d
+sudo nerdctl run -d --gpus="all" --user=root --env NB_USER="opencv" --env CHOWN_HOME="yes" --name="opencv-projects" -p="8888:8888" --volume="${PWD}/src:/home/opencv/src" --volume="${PWD}/infra/image/jupyter/scripts:/home/opencv/scripts" opencv-projects:latest
 ```
 
-```shell
-sudo nerdctl run -d --gpus="all" --name="opencv-projects" -p="8888:8888" --volume="${PWD}/src:/home/opencv/src" opencv-projects:latest
-```
+> [!NOTE]
+>
+> When running the container with `nerdcrl run`, make sure that the container with the same name (`opencv-projects`) does not already exist. If it does, you can `sudo nerdctl container rm -f opencv-projects` to forcefully remove it.

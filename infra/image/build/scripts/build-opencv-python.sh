@@ -7,6 +7,9 @@ export ENABLE_HEADLESS=1
 # (i.e.) via opencv-python
 # -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
 export CMAKE_ARGS=$(cat <<EOCMA
+  -DCMAKE_PREFIX_PATH=/opt/conda \
+  -DPYTHON3_NUMPY_INCLUDE_DIRS=/opt/conda/lib/python3.11/site-packages/numpy/core/include \
+  \
   -GNinja \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_SHARED_LIBS=OFF \
@@ -46,8 +49,8 @@ export CMAKE_ARGS=$(cat <<EOCMA
   -DWITH_OPENGL=ON \
   \
   -DWITH_PROTOBUF=ON \
-  -DBUILD_PROTOBUF=ON \
-  -DPROTOBUF_UPDATE_FILES=OFF \
+  -DBUILD_PROTOBUF=OFF \
+  -DPROTOBUF_UPDATE_FILES=ON \
   \
   -DBUILD_opencv_python3=ON \
   -DBUILD_opencv_python2=OFF

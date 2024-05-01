@@ -11,11 +11,12 @@ services:
     environment:
       NB_USER: "opencv"
       CHOWN_HOME: "yes"
-    working_dir: "/home/opencv"
+    working_dir: "/home/opencv/workdir"
     ports:
       - "8888:8888"
     volumes:
-      - "./src:/home/opencv/src"
+      - "./infra/image/jupyter/scripts:/home/opencv/scripts"
+      - "./src:/home/opencv/workdir/src"
     deploy:
       resources:
         reservations:

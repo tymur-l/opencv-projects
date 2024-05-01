@@ -29,7 +29,7 @@ RUN echo "/usr/local/cuda/lib64" > /etc/ld.so.conf.d/nvidia-codec-sdk.conf
 
 USER ${NB_UID}
 
-COPY ./jupyter/conda-requirements.txt /tmp/requirements.txt
+COPY ./conda-requirements.txt /tmp/requirements.txt
 
 RUN mamba install --yes --file /tmp/requirements.txt && \
   mamba clean --all -f -y && \
@@ -46,9 +46,10 @@ RUN cp /opt/conda/lib/libnppc.so.12 /opt/conda/lib/libnppial.so.12 /opt/conda/li
 USER ${NB_UID}
 
 # TODO: build produces wheel with cp310 abi tag instead of abi3, needs to be fixed
-COPY ./deps/opencv-build/opencv*.whl /tmp/
+COPY --chown="${NB_USER}" ./deps/opencv-build/opencv*.whl /tmp/
 
 # TODO: make it a conda package and install via mamba?
 RUN pip install --no-cache-dir /tmp/opencv*.whl && \
   fix-permissions "${CONDA_DIR}" && \
-  fix-permissions "/home/${NB_USER}"
+  fix-permissions "/home/${NB_USER}" && \
+  rm -rf /tmp/opencv*.whl
