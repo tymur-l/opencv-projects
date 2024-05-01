@@ -5,8 +5,7 @@ services:
     image: "opencv-python-build:latest"
     build:
       context: "./image"
-      dockerfile: "./build/Containerfile.opencv-python-build"
-      # dockerfile: "./build/Containerfile.opencv-python-build-conda"
+      dockerfile: "./build/Containerfile"
     container_name: "opencv-python-build"
     # Does not work with nerdctl (https://github.com/containerd/nerdctl/issues/590)
     # tty: true
