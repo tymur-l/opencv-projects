@@ -14,7 +14,6 @@ services:
     volumes:
       - "./image/deps/opencv-build:/home/opencv/build"
       - "./image/build/scripts:/home/opencv/scripts"
-      - "./image/build/data:/home/opencv/data"
     deploy:
       resources:
         reservations:

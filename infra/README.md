@@ -49,7 +49,7 @@ sudo nerdctl compose -f="./infra/compose.build.yaml" up -d
 > ```
 > And run the container manually (thankfully, the image has already been built so it won't be rebuilt):
 > ```shell
-> sudo nerdctl run -dt --gpus="all" --name="opencv-python-build" --volume="${PWD}/infra/image/deps/opencv-build:/home/opencv/build" --volume="${PWD}/infra/image/build/scripts:/home/opencv/scripts" --volume="${PWD}/infra/image/build/data:/home/opencv/data" opencv-python-build:latest
+> sudo nerdctl run -dt --gpus="all" --name="opencv-python-build" --volume="${PWD}/infra/image/deps/opencv-build:/home/opencv/build" --volume="${PWD}/infra/image/build/scripts:/home/opencv/scripts" opencv-python-build:latest
 > ```
 
 > Add `--build` after `up` if you changed the `Conainerfile.opencv-python-build` and want to rebuild the image.
