@@ -52,7 +52,7 @@ sudo nerdctl compose -f="./infra/compose.build.yaml" up -d
 > sudo nerdctl run -dt --gpus="all" --name="opencv-python-build" --volume="${PWD}/infra/image/deps/opencv-build:/home/opencv/build" --volume="${PWD}/infra/image/build/scripts:/home/opencv/scripts" opencv-python-build:latest
 > ```
 
-> Add `--build` after `up` if you changed the `Conainerfile.opencv-python-build` and want to rebuild the image.
+> Add `--build` after `up` if you changed the `Conainerfile` and want to rebuild the image.
 
 This will start a build container. The container has 2 attached volumes:
 
