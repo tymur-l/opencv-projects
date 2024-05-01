@@ -13,7 +13,7 @@ services:
     # Don't let the container exit immediately after it is started
     command: "tail -F /dev/null"
     volumes:
-      - "./deps/opencv-build:/home/opencv/build"
+      - "./image/deps/opencv-build:/home/opencv/build"
       - "./image/build/scripts:/home/opencv/scripts"
       - "./image/build/data:/home/opencv/data"
     deploy:

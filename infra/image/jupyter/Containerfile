@@ -1,4 +1,9 @@
-FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-19 as jupyter-base
+# CUDA 12, so requires nvidia driver >=525.60.13
+# https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#id5
+# FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-19 as jupyter-base
+
+# Using pytorch image instead with CUDA 11, because OS has older nvidia drivers
+FROM quay.io/jupyter/pytorch-notebook:cuda11-2024-04-29 as jupyter-base
 
 USER root
 
@@ -24,8 +29,8 @@ EOF
 
 # Copy Nvidia Codec SDK
 COPY ./deps/nvidia-codec-sdk/Lib/linux/stubs/x86_64/*.so /usr/local/cuda/lib64/
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}/usr/local/cuda/lib64/"
-RUN echo "/usr/local/cuda/lib64" > /etc/ld.so.conf.d/nvidia-codec-sdk.conf
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}/opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_cupti/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_nvcc/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_nvrtc/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_runtime/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cufft/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/curand/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cusolver/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cusparse/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/nccl/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/nvjitlink/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_cupti/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_nvcc/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_nvrtc/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_runtime/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cufft/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/curand/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cusolver/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cusparse/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/nccl/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/nvjitlink/lib/:/usr/local/cuda/lib64/"
+RUN echo "/usr/local/cuda/lib64" > /etc/ld.so.conf.d/nvidia-libs.conf
 
 USER ${NB_UID}
 
@@ -36,16 +41,24 @@ RUN mamba install --yes --file /tmp/requirements.txt && \
   fix-permissions "${CONDA_DIR}" && \
   fix-permissions "/home/${NB_USER}"
 
-# Copy nvidia lib installed by conda to be discovered by CUDA OpenCV
 USER root
-RUN cp /opt/conda/lib/libnppc.so.12 /opt/conda/lib/libnppial.so.12 /opt/conda/lib/libnppicc.so.12 \
-  /opt/conda/lib/libnppidei.so.12 /opt/conda/lib/libnppif.so.12 /opt/conda/lib/libnppig.so.12 \
-  /opt/conda/lib/libnppim.so.12 /opt/conda/lib/libnppist.so.12 /opt/conda/lib/libnppitc.so.12 \
-  \
-  /usr/local/cuda/lib64/
+# Copy nvidia lib installed by conda to be discovered by CUDA OpenCV
+RUN <<EOF
+echo "/opt/conda/lib/libnppc.so
+/opt/conda/lib/libnppial.so
+/opt/conda/lib/libnppicc.so
+/opt/conda/lib/libnppidei.so
+/opt/conda/lib/libnppif.so
+/opt/conda/lib/libnppig.so
+/opt/conda/lib/libnppim.so
+/opt/conda/lib/libnppist.so
+/opt/conda/lib/libnppitc.so" | \
+  awk '{ print $1".11" }' | \
+  awk -F '/' '{ print $0"\n/usr/local/cuda/lib64/"$NF }' | \
+  xargs -L 2 ln -s
+EOF
 USER ${NB_UID}
 
-# TODO: build produces wheel with cp310 abi tag instead of abi3, needs to be fixed
 COPY --chown="${NB_USER}" ./deps/opencv-build/opencv*.whl /tmp/
 
 # TODO: make it a conda package and install via mamba?

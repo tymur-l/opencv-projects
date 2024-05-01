@@ -1,4 +1,9 @@
-FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-19 as jupyter-base
+# CUDA 12, so requires nvidia driver >=525.60.13
+# https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#id5
+# FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-19 as jupyter-base
+
+# Using pytorch image instead with CUDA 11, because OS has older nvidia drivers
+FROM quay.io/jupyter/pytorch-notebook:cuda11-2024-04-29 as jupyter-base
 
 # Install the same dependencies in the same environment where OpenCV is
 # expected to be running
@@ -8,7 +13,8 @@ RUN mamba install --yes --file /tmp/requirements.txt && \
   fix-permissions "${CONDA_DIR}" && \
   fix-permissions "/home/${NB_USER}"
 
-FROM nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04 as cuda
+# FROM nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04 as cuda
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04 as cuda
 
 # Copy Nvidia Codec SDK
 COPY ./deps/nvidia-codec-sdk/Interface/*.h /usr/local/cuda/include
@@ -74,69 +80,6 @@ RUN rm -rf /usr/bin/python3 && ln -s /usr/bin/python3.11 /usr/bin/python3
 
 # Ensure pip is updated
 RUN pip install --upgrade pip
-
-# # Copy the same libraries as in the anaconda target environment
-# # anaconda's libgio in this container, so that when we use the lib
-# # from the anaconda environment, it will not fail:
-# # - https://github.com/opencv/opencv/issues/7940
-# # - https://github.com/opencv/opencv/issues/19958
-# RUN rm -rf \
-#   /usr/lib/x86_64-linux-gnu/libgio-2.0.so \
-#   /usr/lib/x86_64-linux-gnu/libgio-2.0.so.0 \
-#   /usr/lib/x86_64-linux-gnu/libgio-2.0.so.0.7200.4
-# COPY --from=jupyter-base --chown=root:root /opt/conda/lib/libgio-2.0.so.0.8000.0 /usr/lib/x86_64-linux-gnu/libgio-2.0.so.0.8000.0
-
-# TODO: copy these too
-# /usr/lib/x86_64-linux-gnu/libcuda.so.470.239.06
-# /usr/local/cuda/lib64/libnvcuvid.so
-# /usr/local/cuda/lib64/libnvidia-encode.so
-# /usr/lib/x86_64-linux-gnu/libgstbase-1.0.so.0.2003.0
-# /usr/lib/x86_64-linux-gnu/libgstreamer-1.0.so.0.2003.0
-# /usr/lib/x86_64-linux-gnu/libgobject-2.0.so.0.7200.4
-# /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0.7200.4
-# /usr/lib/x86_64-linux-gnu/libgstapp-1.0.so.0.2001.0
-# /usr/lib/x86_64-linux-gnu/libgstriff-1.0.so.0.2001.0
-# /usr/lib/x86_64-linux-gnu/libgstpbutils-1.0.so.0.2001.0
-# /usr/lib/x86_64-linux-gnu/libgstvideo-1.0.so.0.2001.0
-# /usr/lib/x86_64-linux-gnu/libgstaudio-1.0.so.0.2001.0
-# /usr/lib/x86_64-linux-gnu/libjpeg.so.8.2.2
-# /usr/lib/x86_64-linux-gnu/libwebp.so.7.1.3
-# /usr/lib/x86_64-linux-gnu/libpng16.so.16.37.0
-# /usr/lib/x86_64-linux-gnu/libtiff.so.5.7.0
-# /usr/lib/x86_64-linux-gnu/libz.so.1.2.11
-# /usr/local/cuda/lib64/libnppc.so.12
-# /usr/local/cuda/lib64/libnppial.so.12
-# /usr/local/cuda/lib64/libnppicc.so.12
-# /usr/local/cuda/lib64/libnppidei.so.12
-# /usr/local/cuda/lib64/libnppif.so.12
-# /usr/local/cuda/lib64/libnppig.so.12
-# /usr/local/cuda/lib64/libnppim.so.12
-# /usr/local/cuda/lib64/libnppist.so.12
-# /usr/local/cuda/lib64/libnppitc.so.12
-# /opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib/libcublas.so.12
-# /opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib/libcudnn.so.8
-# /opt/conda/lib/python3.11/site-packages/nvidia/cufft/lib/libcufft.so.11
-# /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30
-# /usr/lib/x86_64-linux-gnu/libm.so.6
-# /usr/lib/x86_64-linux-gnu/libgcc_s.so.1
-# /usr/lib/x86_64-linux-gnu/libc.so.6
-# /usr/lib/x86_64-linux-gnu/libdl.so.2
-# /usr/lib/x86_64-linux-gnu/libpthread.so.0
-# /usr/lib/x86_64-linux-gnu/librt.so.1
-# /usr/lib/x86_64-linux-gnu/libgmodule-2.0.so.0.7200.4
-# /usr/lib/x86_64-linux-gnu/libunwind.so.8.0.1
-# /usr/lib/x86_64-linux-gnu/libdw-0.186.so
-# /usr/lib/x86_64-linux-gnu/libffi.so.8.1.0
-# /usr/lib/x86_64-linux-gnu/libpcre.so.3.13.3
-# /usr/lib/x86_64-linux-gnu/libgsttag-1.0.so.0.2001.0
-# /usr/lib/x86_64-linux-gnu/liborc-0.4.so.0.32.0
-# /usr/lib/x86_64-linux-gnu/libzstd.so.1.4.8
-# /usr/lib/x86_64-linux-gnu/liblzma.so.5.2.5
-# /usr/lib/x86_64-linux-gnu/libjbig.so.0
-# /usr/lib/x86_64-linux-gnu/libdeflate.so.0
-# /opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib/libcublasLt.so.12
-# /usr/lib/x86_64-linux-gnu/libelf-0.186.so
-# /usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4
 
 COPY --from=jupyter-base --chown=root:root /opt/conda /opt/conda
 
