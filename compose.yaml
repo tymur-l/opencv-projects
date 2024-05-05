@@ -11,18 +11,26 @@ services:
     environment:
       NB_USER: "opencv"
       CHOWN_HOME: "yes"
-    working_dir: "/home/opencv/workdir"
+      TERM: "linux"
+    working_dir: "/home/opencv"
     ports:
       - "8888:8888"
     volumes:
+      - "./infra/image/jupyter/settings:/opt/conda/share/jupyter/lab/settings"
       - "./infra/image/jupyter/scripts:/home/opencv/scripts"
-      - "./src:/home/opencv/workdir/src"
+      - "./src:/home/opencv/workdir"
+    # https://jupyter-docker-stacks.readthedocs.io/en/latest/using/running.html#example-2
+    command: >-2
+      start-notebook.py
+      --ServerApp.root_dir=/home/opencv/workdir
+      --IdentityProvider.token='opencv'
+    # TODO: also add jupyter lab configuration file
     deploy:
       resources:
         reservations:
           devices:
             - capabilities:
-                - "nvidia-compute"
+                - "compute"
                 - "utility"
               driver: "nvidia"
               count: "all"

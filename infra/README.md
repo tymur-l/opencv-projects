@@ -106,7 +106,26 @@ When jupyter container is built, OpenCV CUDA build will be installed in the cond
 After you [built a jupyter image with CUDA OpenCV](#building-jupyter-image-with-cuda-opencv), you can start new container with the following command:
 
 ```shell
-sudo nerdctl run -d --gpus="all" --user=root --env NB_USER="opencv" --env CHOWN_HOME="yes" --name="opencv-projects" -p="8888:8888" --volume="${PWD}/src:/home/opencv/src" --volume="${PWD}/infra/image/jupyter/scripts:/home/opencv/scripts" opencv-projects:latest
+sudo nerdctl run -d \
+  --gpus="all" \
+  --user=root \
+  \
+  --env NB_USER="opencv" \
+  --env CHOWN_HOME="yes" \
+  --env TERM="linux" \
+  --name="opencv-projects" \
+  -p="8888:8888" \
+  \
+  --volume="${PWD}/infra/image/jupyter/scripts:/home/opencv/scripts" \
+  --volume="${PWD}/src:/home/opencv/workdir" \
+  \
+  --workdir="/home/opencv" \
+  \
+  opencv-projects:latest \
+  \
+  start-notebook.py \
+  --ServerApp.root_dir=/home/opencv/workdir \
+  --IdentityProvider.token='opencv'
 ```
 
 > [!NOTE]

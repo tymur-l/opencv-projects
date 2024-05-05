@@ -1,0 +1,4 @@
+# Dependencies not found in anaconda repositories
+## Dev dependencies
+
+catppuccin-jupyterlab == 0.2.1

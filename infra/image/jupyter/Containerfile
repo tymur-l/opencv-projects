@@ -34,10 +34,12 @@ RUN echo "/usr/local/cuda/lib64" > /etc/ld.so.conf.d/nvidia-libs.conf
 
 USER ${NB_UID}
 
-COPY ./conda-requirements.txt /tmp/requirements.txt
-
-RUN mamba install --yes --file /tmp/requirements.txt && \
+COPY ./*-requirements.txt /tmp/
+RUN mamba install --yes --file /tmp/conda-requirements.txt && \
   mamba clean --all -f -y && \
+  fix-permissions "${CONDA_DIR}" && \
+  fix-permissions "/home/${NB_USER}"
+RUN pip install --no-cache-dir -r /tmp/pypi-requirements.txt && \
   fix-permissions "${CONDA_DIR}" && \
   fix-permissions "/home/${NB_USER}"
 
@@ -66,3 +68,5 @@ RUN pip install --no-cache-dir /tmp/opencv*.whl && \
   fix-permissions "${CONDA_DIR}" && \
   fix-permissions "/home/${NB_USER}" && \
   rm -rf /tmp/opencv*.whl
+
+VOLUME /opt/conda/share/jupyter/lab/settings

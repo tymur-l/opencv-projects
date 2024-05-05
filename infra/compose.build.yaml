@@ -19,7 +19,7 @@ services:
         reservations:
           devices:
             - capabilities:
-                - "nvidia-compute"
+                - "compute"
                 - "utility"
               driver: "nvidia"
               count: "all"

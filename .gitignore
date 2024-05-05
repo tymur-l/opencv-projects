@@ -1,2 +1,6 @@
 infra/image/deps/
 infra/opencv-build/
+
+# Jupyter
+.ipynb_checkpoints/
+.virtual_documents/

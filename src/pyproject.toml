@@ -1,0 +1,29 @@
+[tool.jupytext]
+formats = "ipynb,py:percent"
+
+[tool.pylsp-mypy]
+enabled = true
+dmypy = true
+# live_mode true is not supported with dmypy = true
+live_mode = false
+strict = true
+
+# TODO: add more configuration
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 80
+indent-width = 3
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

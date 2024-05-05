@@ -1,0 +1,53 @@
+{
+  "@jupyterlab/apputils-extension:themes": {
+    "theme": "Catppuccin Latte",
+    "adaptive-theme": true,
+    "preferred-light-theme": "Catppuccin Latte",
+    "preferred-dark-theme": "Catppuccin Frappé",
+    "theme-scrollbars": true
+  },
+  "@jupyterlab/terminal-extension:plugin": {
+    // Requires Iosevka Nerd Fonts to be installed
+    // https://github.com/ryanoasis/nerd-fonts
+    "fontFamily": "Iosevka Nerd Font",
+    "fontSize": 16,
+    "lineHeight": 1,
+    "theme": "inherit",
+    "screenReaderMode": false,
+    "scrollback": 1000,
+    "shutdownOnClose": true,
+    "closeOnExit": true,
+    "pasteWithCtrlV": true,
+    "macOptionIsMeta": false,
+    "cursorBlink": true
+  },
+  "@jupyterlab/apputils-extension:notification": {
+    "fetchNews": "false",
+    "checkForUpdates": true,
+    "doNotDisturbMode": false
+  },
+  "@jupyterlab/markdownviewer-extension:plugin": {
+    // Requires Iosevka Nerd Fonts to be installed
+    // https://github.com/ryanoasis/nerd-fonts
+    "fontFamily": "Iosevka Nerd Font"
+  },
+  "LanguageServerManager": {
+    "autodetect": true,
+    "language_servers": {
+      "pylsp": {
+        "version": 2,
+        "argv": [],
+        "languages": ["python"],
+        "requires_documents_on_disk": false,
+        // Configure python-lsp
+        // https://github.com/python-lsp/python-lsp-server/blob/develop/CONFIGURATION.md
+        "workspace_configuration": { 
+          // TODO: ruff still does not work, how to debug python lsp? Possibly look at logs?
+          // https://github.com/python-lsp/python-lsp-ruff?tab=readme-ov-file#configuration
+          "pylsp.plugins.ruff.enabled": true,
+          "pylsp.plugins.ruff.formatEnabled": true
+        }
+      }
+    }
+  }
+}
