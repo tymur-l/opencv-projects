@@ -24,6 +24,12 @@ unfixable = []
 # https://docs.astral.sh/ruff/rules/
 select = ["ALL"]
 ignore = [
+  # These rules can conflict with formatter, so they should be fixed manually
+  "COM812", # Adds trailing comma
+  "ISC001", # Concatenates multiple consecutive strings into one
+
+  "D211", # No blank lines before class
+  "D213", # Multi line summary second line
   "INP001", # Missing __init__.py
   "D100", # Missing docstring in public module
 ]

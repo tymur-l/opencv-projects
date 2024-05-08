@@ -3,7 +3,7 @@
 # FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-19 as jupyter-base
 
 # Using pytorch image instead with CUDA 11, because OS has older nvidia drivers
-FROM quay.io/jupyter/pytorch-notebook:cuda11-2024-04-29 as jupyter-base
+FROM quay.io/jupyter/pytorch-notebook:cuda11-2024-05-06 as jupyter-base
 
 # Install the same dependencies in the same environment where OpenCV is
 # expected to be running

@@ -26,20 +26,69 @@
     "checkForUpdates": true,
     "doNotDisturbMode": false
   },
+  "catppuccin_jupyterlab:plugin": {
+    "brandColor": "green",
+    "accentColor": "green"
+  },
   "@jupyterlab/markdownviewer-extension:plugin": {
     // Requires Iosevka Nerd Fonts to be installed
     // https://github.com/ryanoasis/nerd-fonts
     // "fontFamily": "Iosevka Aile"
     "fontFamily": "Iosevka Etoile"
   },
+  "@jupyterlab/codemirror-extension:plugin": {
+    "defaultConfig": {
+      "lineNumbers": true,
+      "lineWrap": true,
+      "matchBrackets": true,
+      "rectangularSelection": true,
+      "smartIndent": true,
+      "allowMultipleSelections": true,
+      "codeFolding": true,
+      "highlightActiveLine": true,
+      "highlightWhitespace": true,
+      "highlightTrailingWhitespace": true,
+      "indentUnit": "2",
+      "tabSize": 2
+    }
+  },
+  "@jupyterlab/notebook-extension:tracker": {
+    "codeCellConfig": {
+      "lineNumbers": true,
+      "lineWrap": true
+    },
+    "markdownCellConfig": {
+      "lineNumbers": true,
+      "matchBrackets": false
+    },
+    "rawCellConfig": {
+      "lineNumbers": true,
+      "matchBrackets": false
+    }
+  },
   "@deathbeds/jupyterlab-fonts:fonts": {
     "styles": {
-        ":root": {
-            "--jp-code-font-family": "'Iosevka Nerd Font'",
-            "--jp-code-font-size": "16px",
-            "--jp-content-font-family": "'Iosevka Aile'",
-            "--jp-ui-font-family": "'Iosevka Aile'"
-        }
+      ":root": {
+        "--jp-code-font-family": "'Iosevka Nerd Font'",
+        "--jp-code-font-size": "16px",
+        "--jp-content-font-family": "'Iosevka Aile'",
+        "--jp-ui-font-family": "'Iosevka Aile'"
+      }
+    }
+  },
+  // TODO: autofix with ruff does not work with this plugin, maybe will be fixed in a new version
+  "jupyterlab_code_formatter:settings": {
+    "preferences": {
+      "default_formatter": {
+        "python": "ruff"
+      }
+    },
+    "formatOnSave": true,
+    "suppressFormatterErrors": false,
+    "ruff": {
+      "args": [
+        "--select=ALL"
+      ]
     }
   },
   "@jupyter-lsp/jupyterlab-lsp:plugin": {
@@ -50,13 +99,10 @@
           "pylsp.plugins.rope_autoimport.completions.enabled": true,
           "pylsp.plugins.rope_autoimport.code_actions.enabled": true,
           "pylsp.plugins.rope_autoimport.memory": false,
-
           "pylsp.plugins.rope_completion.enabled": true,
           "pylsp.plugins.rope_completion.eager": false,
-
           "pylsp.plugins.ruff.enabled": true,
           "pylsp.plugins.ruff.formatEnabled": true,
-
           // Explicitly disable plugins which will be functionally replaced by ruff
           "pylsp.plugins.pyflakes.enabled": false,
           "pylsp.plugins.mccabe.enabled": false,
