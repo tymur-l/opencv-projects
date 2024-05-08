@@ -32,6 +32,9 @@ ignore = [
   "D213", # Multi line summary second line
   "INP001", # Missing __init__.py
   "D100", # Missing docstring in public module
+  "T201", # print statements
+  "T203", # pprint statements
+  "ERA001", # Commented-out code
 ]
 
 [tool.ruff.format]
