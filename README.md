@@ -12,6 +12,8 @@ For convenient development experience, the following extensions are installed an
       - [ ] TODO: configure to run on save
 - [jupyterlab-vim](https://jupyterlab-contrib.github.io/jupyterlab-vim.html)
 
+For more info, see how to [set up the dev environment](./infra/README.md).
+
 ### Jupytext
 
 Resync `notebook.ipynb` from `notebook.py` manually:

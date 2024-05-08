@@ -95,7 +95,7 @@ cp -R ./ ~/build/
 
 #### Font
 
-By default, the [Jupyter image](./image/jupyter/Containerfile) uses **Iosevka Nerd** font, so it needs to be [installed](https://github.com/ryanoasis/nerd-fonts?tab=readme-ov-file#font-installation) if you want the [default config](./image/jupyter/settings/overrides/overrides.json5) to work well out of the box. Alternatively, you can customize [`infra/image/jupyter/settings/overrides/overrides.json5`](./image/jupyter/settings/overrides/overrides.json5) to use the font of your preference.
+By default, the [Jupyter image](./image/jupyter/Containerfile) uses [**Iosevka Nerd**](https://github.com/ryanoasis/nerd-fonts?tab=readme-ov-file#font-installation), [Iosevka Aile, and Iosevka Etoile](https://github.com/be5invis/Iosevka/releases) fonts, so they need to be installed if you want the [default config](./image/jupyter/settings/overrides/overrides.json5) to work well out of the box. Alternatively, you can customize [`infra/image/jupyter/settings/overrides/overrides.json5`](./image/jupyter/settings/overrides/overrides.json5) to use the font of your preference.
 
 ### Building jupyter image with CUDA OpenCV
 

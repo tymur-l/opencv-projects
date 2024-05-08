@@ -9,7 +9,7 @@
   "@jupyterlab/terminal-extension:plugin": {
     // Requires Iosevka Nerd Fonts to be installed
     // https://github.com/ryanoasis/nerd-fonts
-    "fontFamily": "Iosevka Nerd Font",
+    "fontFamily": "IosevkaTerm Nerd Font",
     "fontSize": 16,
     "lineHeight": 1,
     "theme": "inherit",
@@ -29,7 +29,18 @@
   "@jupyterlab/markdownviewer-extension:plugin": {
     // Requires Iosevka Nerd Fonts to be installed
     // https://github.com/ryanoasis/nerd-fonts
-    "fontFamily": "Iosevka Nerd Font"
+    // "fontFamily": "Iosevka Aile"
+    "fontFamily": "Iosevka Etoile"
+  },
+  "@deathbeds/jupyterlab-fonts:fonts": {
+    "styles": {
+        ":root": {
+            "--jp-code-font-family": "'Iosevka Nerd Font'",
+            "--jp-code-font-size": "16px",
+            "--jp-content-font-family": "'Iosevka Aile'",
+            "--jp-ui-font-family": "'Iosevka Aile'"
+        }
+    }
   },
   "@jupyter-lsp/jupyterlab-lsp:plugin": {
     "language_servers": {

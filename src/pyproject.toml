@@ -21,6 +21,12 @@ indent-width = 3
 [tool.ruff.lint]
 fixable = ["ALL"]
 unfixable = []
+# https://docs.astral.sh/ruff/rules/
+select = ["ALL"]
+ignore = [
+  "INP001", # Missing __init__.py
+  "D100", # Missing docstring in public module
+]
 
 [tool.ruff.format]
 quote-style = "double"
