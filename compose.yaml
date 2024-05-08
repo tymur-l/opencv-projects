@@ -16,7 +16,8 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - "./infra/image/jupyter/settings:/opt/conda/share/jupyter/lab/settings"
+      - "./infra/image/jupyter/settings/overrides:/opt/conda/share/jupyter/lab/settings"
+      - "./infra/image/jupyter/settings/config:/usr/local/etc/jupyter"
       - "./infra/image/jupyter/scripts:/home/opencv/scripts"
       - "./src:/home/opencv/workdir"
     # https://jupyter-docker-stacks.readthedocs.io/en/latest/using/running.html#example-2
@@ -24,7 +25,6 @@ services:
       start-notebook.py
       --ServerApp.root_dir=/home/opencv/workdir
       --IdentityProvider.token='opencv'
-    # TODO: also add jupyter lab configuration file
     deploy:
       resources:
         reservations:

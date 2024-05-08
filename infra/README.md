@@ -91,6 +91,12 @@ cp -R ./ ~/build/
 
 ## Jupyter image with OpenCV compiled for CUDA
 
+### Prerequisites
+
+#### Font
+
+By default, the [Jupyter image](./image/jupyter/Containerfile) uses **Iosevka Nerd** font, so it needs to be [installed](https://github.com/ryanoasis/nerd-fonts?tab=readme-ov-file#font-installation) if you want the [default config](./image/jupyter/settings/overrides/overrides.json5) to work well out of the box. Alternatively, you can customize [`infra/image/jupyter/settings/overrides/overrides.json5`](./image/jupyter/settings/overrides/overrides.json5) to use the font of your preference.
+
 ### Building jupyter image with CUDA OpenCV
 
 When you [have built OpenCV with CUDA](#build-opencv-from-sources-with-cuda), build jupyter container with OpenCV installed:

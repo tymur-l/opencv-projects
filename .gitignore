@@ -4,3 +4,6 @@ infra/opencv-build/
 # Jupyter
 .ipynb_checkpoints/
 .virtual_documents/
+
+# Dev tools
+.ruff_cache

@@ -31,21 +31,30 @@
     // https://github.com/ryanoasis/nerd-fonts
     "fontFamily": "Iosevka Nerd Font"
   },
-  "LanguageServerManager": {
-    "autodetect": true,
+  "@jupyter-lsp/jupyterlab-lsp:plugin": {
     "language_servers": {
       "pylsp": {
-        "version": 2,
-        "argv": [],
-        "languages": ["python"],
-        "requires_documents_on_disk": false,
-        // Configure python-lsp
-        // https://github.com/python-lsp/python-lsp-server/blob/develop/CONFIGURATION.md
-        "workspace_configuration": { 
-          // TODO: ruff still does not work, how to debug python lsp? Possibly look at logs?
-          // https://github.com/python-lsp/python-lsp-ruff?tab=readme-ov-file#configuration
+        "serverSettings": {
+          "pylsp.plugins.rope_autoimport.enabled": true,
+          "pylsp.plugins.rope_autoimport.completions.enabled": true,
+          "pylsp.plugins.rope_autoimport.code_actions.enabled": true,
+          "pylsp.plugins.rope_autoimport.memory": false,
+
+          "pylsp.plugins.rope_completion.enabled": true,
+          "pylsp.plugins.rope_completion.eager": false,
+
           "pylsp.plugins.ruff.enabled": true,
-          "pylsp.plugins.ruff.formatEnabled": true
+          "pylsp.plugins.ruff.formatEnabled": true,
+
+          // Explicitly disable plugins which will be functionally replaced by ruff
+          "pylsp.plugins.pyflakes.enabled": false,
+          "pylsp.plugins.mccabe.enabled": false,
+          "pylsp.plugins.pycodestyle.enabled": false,
+          "pylsp.plugins.pydocstyle.enabled": false,
+          "pylsp.plugins.autopep8.enabled": false,
+          "pylsp.plugins.yapf.enabled": false,
+          "pylsp.plugins.flake8.enabled": false,
+          "pylsp.plugins.pylint.enabled": false
         }
       }
     }
