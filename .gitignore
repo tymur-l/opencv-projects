@@ -7,3 +7,6 @@ infra/opencv-build/
 
 # Dev tools
 .ruff_cache
+
+# Course sources
+src/fundamentals-of-cv-and-ip-in-python/*/course
