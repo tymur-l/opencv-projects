@@ -10,3 +10,6 @@ infra/opencv-build/
 
 # Course sources
 src/fundamentals-of-cv-and-ip-in-python/*/course
+
+# Python
+__pycache__

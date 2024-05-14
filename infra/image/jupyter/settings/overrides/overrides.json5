@@ -66,6 +66,10 @@
       "matchBrackets": false
     }
   },
+  "@jupyterlab/docmanager-extension:plugin": {
+    // Increase autosave interval, because autosave resets vim plugin interrupting flow of work
+    "autosaveInterval": 3600 // seconds == 1 hour
+  },
   "@deathbeds/jupyterlab-fonts:fonts": {
     "styles": {
       ":root": {
