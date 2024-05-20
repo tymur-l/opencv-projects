@@ -6,7 +6,15 @@ Based on https://github.com/opencv/opencv-python.
 
 ### Limitations
 
-- Supports only X64 for now
+- For now supports only:
+  - X64
+  - Linux
+    - QT when using `highgui` module
+    - > [!NOTE]
+      > 
+      > It seems that OpenCV does not support OpenGL when building highgui for GTK3:
+      > - https://forum.opencv.org/t/building-opencv-with-opengl-build-error/7106/12
+      > - https://github.com/opencv/opencv/blob/c71d4952733a0e1dd1f88ac87066c802f1119d97/modules/highgui/src/window_gtk.cpp#L49-L51
 - Requires cuDNN 8 ([OpenCV 4.9.0 does not support cuDNN 9](https://github.com/opencv/opencv/issues/24983))
 
 ### Prerequisites

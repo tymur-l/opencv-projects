@@ -12,6 +12,9 @@ seaborn == 0.13.2
 ## Additional CUDA dependencies that have not been installed by tensorflow CUDA
 nvidia::libnpp == 11.8.0.86
 
+## GUI dependencies
+qt == 5.15.8
+
 ## Dev tools
 jupyterlab-fonts == 3.0.0
 jupytext == 1.16.1

@@ -17,6 +17,8 @@ apt install -y --no-install-recommends \
   \
   libgstreamer-plugins-base1.0-dev=1.20.1-1ubuntu0.1 libgstreamer1.0-dev=1.20.3-0ubuntu1 \
   \
+  libgtk-3-dev=3.24.33-1ubuntu2.1 libgtkglext1-dev=1.2.0-11 \
+  \
   "libavutil-dev=${FFMPEG_VERSION}" \
   "libavcodec-dev=${FFMPEG_VERSION}" \
   "libavformat-dev=${FFMPEG_VERSION}" \
@@ -59,6 +61,16 @@ echo "/opt/conda/lib/libnppc.so
   awk -F '/' '{ print $0"\n/usr/local/cuda/lib64/"$NF }' | \
   xargs -L 2 ln -s
 EOF
+
+# QT will use this directory when displaying GUI
+ENV XDG_RUNTIME_DIR="/run/user/${NB_UID}"
+ENV OPENCV_UI_BACKEND="QT"
+RUN <<EOF
+mkdir -p "${XDG_RUNTIME_DIR}"
+chown "${NB_UID}" "${XDG_RUNTIME_DIR}"
+chmod 700 "${XDG_RUNTIME_DIR}"
+EOF
+
 USER ${NB_UID}
 
 COPY --chown="${NB_USER}" ./deps/opencv-build/opencv*.whl /tmp/

@@ -12,6 +12,11 @@ services:
       NB_USER: "opencv"
       CHOWN_HOME: "yes"
       TERM: "linux"
+      # When using X Window System, by default the DISPLAY variable is set such
+      # that X clients (i.e. GUI programs) connect to the local X server via
+      # unix domain socket, located at /tmp/.X11-unix/Xn, where n is X server
+      # number
+      DISPLAY: "${DISPLAY}"
     working_dir: "/home/opencv"
     ports:
       - "8888:8888"
@@ -20,6 +25,13 @@ services:
       - "./infra/image/jupyter/settings/config:/usr/local/etc/jupyter"
       - "./infra/image/jupyter/scripts:/home/opencv/scripts"
       - "./src:/home/opencv/workdir"
+      # This allows X clients, i.e. programs that display their GUI to X
+      # server, such as when displaying GUI windows with OpenCV, to connect to
+      # the X server running on the host. This way the windows will be
+      # displayed on the machine running the container.
+      # Make sure you have authorized opencv group via xhost locally:
+      # $ xhost +si:localgroup:opencv
+      - "/tmp/.X11-unix:/tmp/.X11-unix"
     # https://jupyter-docker-stacks.readthedocs.io/en/latest/using/running.html#example-2
     command: >-2
       start-notebook.py
