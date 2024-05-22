@@ -50,7 +50,7 @@ print(f"Camera resolution after setting it to custom: {width}x{height}")
 
 fps: float = webcam_cap.get(cv2.CAP_PROP_FPS)
 fps = 30.0 if math.isclose(fps, 0.0, rel_tol=0.0, abs_tol=0e-05) else fps
-frame_duration_ms = math.ceil(1000 / fps)
+frame_duration_ms = math.floor(1000 / fps)
 print(f"Camera FPS: {fps} ({frame_duration_ms} ms per frame)")
 
 while webcam_cap.isOpened():
