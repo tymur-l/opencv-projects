@@ -32,6 +32,9 @@ services:
       # Make sure you have authorized opencv group via xhost locally:
       # $ xhost +si:localgroup:opencv
       - "/tmp/.X11-unix:/tmp/.X11-unix"
+    # Pass your webcam here
+    # devices:
+    #   - "/dev/video0"
     # https://jupyter-docker-stacks.readthedocs.io/en/latest/using/running.html#example-2
     command: >-2
       start-notebook.py

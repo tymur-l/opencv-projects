@@ -62,13 +62,20 @@ echo "/opt/conda/lib/libnppc.so
   xargs -L 2 ln -s
 EOF
 
-# QT will use this directory when displaying GUI
+# Set up necessary folders and groups:
+# - QT will use this directory when displaying GUI, so it needs to be created
+#   and have proper permissions
+# - Ensure the notebook user is in the video group, so that it can access webcam
+#   passed to the container
 ENV XDG_RUNTIME_DIR="/run/user/${NB_UID}"
 ENV OPENCV_UI_BACKEND="QT"
 RUN <<EOF
 mkdir -p "${XDG_RUNTIME_DIR}"
-chown "${NB_UID}" "${XDG_RUNTIME_DIR}"
+chown "${NB_UID}":"${NB_GID}" "${XDG_RUNTIME_DIR}"
 chmod 700 "${XDG_RUNTIME_DIR}"
+
+# groupadd video
+usermod -aG video "${NB_USER}"
 EOF
 
 USER ${NB_UID}
