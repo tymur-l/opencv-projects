@@ -1,15 +1,16 @@
 # %% [markdown]
 # # Capture video from webcam
 #
-# This file shows how to capture video from webcamera. It also demostrates how video properties can be modified before reading, by requesting 1080p resolution frames from camera.
+# This file shows how to capture video from webcam. It also demonstrates how video properties can be modified before reading, by requesting 1080p resolution frames from camera.
 #
 # > ## Note on running in a container
+# >
 # > Make sure that the connected camera is passed in `compose.yaml` in the repo root:
 # >  ```yaml
 # >  devices:
 # >  - "/dev/video0"
 # >  ```
-# > Usually, on a linux system connected cameras are devices under `/dev` directory named `video`**`n`**, where `n` is a number of video device. If you have 1 camera connected to your computer, the webcam will be accessible as `/dev/video0`.
+# > Usually, on a linux system connected cameras are devices under `/dev` directory named `video`**`n`**, where `n` is a number of video device. If you have 1 camera connected to your computer, the webcam will most probably be accessible as `/dev/video0`.
 # >
 # > Additionally, the container user must have permissions to access the device file. By default, the container is set up to add the notebook user to the `video` group, which should be sufficient. If the user does not have access to the device file, an error saying `Camera Index out of range` will occur.
 

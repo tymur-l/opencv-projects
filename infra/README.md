@@ -122,18 +122,24 @@ After you [built a jupyter image with CUDA OpenCV](#building-jupyter-image-with-
 ```shell
 sudo nerdctl run -d \
   --gpus="all" \
+  --name="opencv-projects" \
+  \
   --user=root \
   \
   --env NB_USER="opencv" \
   --env CHOWN_HOME="yes" \
   --env TERM="linux" \
-  --name="opencv-projects" \
-  -p="8888:8888" \
-  \
-  --volume="${PWD}/infra/image/jupyter/scripts:/home/opencv/scripts" \
-  --volume="${PWD}/src:/home/opencv/workdir" \
+  --env DISPLAY="${DISPLAY}" \
   \
   --workdir="/home/opencv" \
+  \
+  -p="8888:8888" \
+  \
+  --volume="${PWD}/infra/image/jupyter/settings/overrides:/opt/conda/share/jupyter/lab/settings" \
+  --volume="${PWD}/infra/image/jupyter/settings/config:/usr/local/etc/jupyter" \
+  --volume="${PWD}/infra/image/jupyter/scripts:/home/opencv/scripts" \
+  --volume="${PWD}/src:/home/opencv/workdir" \
+  --volume="/tmp/.X11-unix:/tmp/.X11-unix" \
   \
   opencv-projects:latest \
   \
@@ -145,3 +151,13 @@ sudo nerdctl run -d \
 > [!NOTE]
 >
 > When running the container with `nerdcrl run`, make sure that the container with the same name (`opencv-projects`) does not already exist. If it does, you can `sudo nerdctl container rm -f opencv-projects` to forcefully remove it.
+
+#### Pass webcam
+
+To pass webcam, add `--device="/dev/video0"` to the command above.
+
+> [!NOTE]
+>
+> Usually, on a linux system connected cameras are devices under `/dev` directory named `video`**`n`**, where `n` is a number of video device. If you have 1 camera connected to your computer, the webcam will most probably be accessible as `/dev/video0`.
+>
+> Additionally, the container user must have permissions to access the device file. By default, the container is set up to add the notebook user to the `video` group, which should be sufficient. If the user does not have access to the device file, an error saying `Camera Index out of range` will occur.
