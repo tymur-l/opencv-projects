@@ -38,6 +38,8 @@ ignore = [
   "T201", # print statements
   "T203", # pprint statements
   "ERA001", # Commented-out code
+  "D101", # Allow public classes without docstrings
+  "D103", # Allow public functions without docstrings
 ]
 
 [tool.ruff.format]

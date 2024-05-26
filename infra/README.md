@@ -161,3 +161,12 @@ To pass webcam, add `--device="/dev/video0"` to the command above.
 > Usually, on a linux system connected cameras are devices under `/dev` directory named `video`**`n`**, where `n` is a number of video device. If you have 1 camera connected to your computer, the webcam will most probably be accessible as `/dev/video0`.
 >
 > Additionally, the container user must have permissions to access the device file. By default, the container is set up to add the notebook user to the `video` group, which should be sufficient. If the user does not have access to the device file, an error saying `Camera Index out of range` will occur.
+
+#### Pass X server
+
+- [ ] TODO: Local X server forwarding:
+  - `DISPLAY` env is used by X clients (GUI programs that want to draw window on a screen) to determine which X server should be used to draw the GUI window
+  - [`/tmp/.X11-unix/X`**`n`** is X's socket file](https://www.x.org/releases/X11R7.7/doc/man/man1/Xserver.1.xhtml). X clients communicate with X server via this file, so if a client program in a container needs to display something on X server that is outside the container, this directory must be passed as a volume to the container. 
+  - Local X server must be configured to accept connections from the container user via `xhost +si:localgroup:opencv` ?
+    - or should GID be used: `xhost +si:localgroup:#GID`
+    - the access is checked by the local X server by user ids
