@@ -34,12 +34,12 @@ print(f"Camera default resolution: {width}x{height}")
 # Set resolution to 1080p
 desired_width = 1920
 desired_height = 1080
-if width_set_result := webcam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, desired_width):
+if webcam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, desired_width):
   print(f"Set width to {desired_width}")
 else:
   print("Failed to set custom width")
 
-if height_set_result := webcam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, desired_height):
+if webcam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, desired_height):
   print(f"Set height to {desired_height}")
 else:
   print("Failed to set custom height")

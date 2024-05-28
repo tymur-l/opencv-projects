@@ -4,11 +4,13 @@
 # This notebook opens an image (or a videostream) in a window and lets the user select a rectangular area on the image with a mouse by holding left mouse button. When the button is release, the selected area from the original image is saved to as a new image file.
 
 # %%
+import math
+from abc import ABCMeta
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, Any, TypeVar, final
+from typing import TYPE_CHECKING, Any, Final, Literal, TypeVar, final
 
 import cv2
 import numpy as np
@@ -18,16 +20,6 @@ from numpy.typing import NDArray
 if TYPE_CHECKING:
   from _typeshed import DataclassInstance
 
-# %%
-images_path = Path(DATA_PATH) / "images"
-source_image_path = images_path / "sample.jpg"
-cropper_window_name = "Cropper"
-
-# %%
-# Read the source image
-source = cv2.imread(str(source_image_path), cv2.IMREAD_ANYCOLOR)
-
-
 # %% [markdown]
 # ## Elm architecture for UI
 #
@@ -36,27 +28,76 @@ source = cv2.imread(str(source_image_path), cv2.IMREAD_ANYCOLOR)
 
 # %%
 @dataclass(frozen=True)
+class ElmArchEvent(metaclass=ABCMeta):  # noqa: B024
+  pass
+
+@dataclass(frozen=True)
 @final
-class OpenCvMouseEvent:
+class ElmArchSourceFrameBufferUpdatedEvent(ElmArchEvent):
+  # TODO: make the event store an updated frame?
+  pass
+
+@dataclass(frozen=True)
+@final
+class ElmArchOpenCvMouseEvent(ElmArchEvent):
   mouse_event: int
   x: int
   y: int
   flags: int
 
 
+# %%
+@dataclass(frozen=True)
+@final
+class ElmArchCallback:
+  cv2_mouse_callback: Callable[[int, int, int, int, Any], None]
+  signal_source_frame_buffer_updated: Callable[[], None]
+  updated_ui_frame_buffer: NDArray[np.uint8]
+
+
+# %%
 if TYPE_CHECKING:
   ElmArchState = TypeVar("ElmArchState", bound=DataclassInstance)
 else:
   ElmArchState = TypeVar("ElmArchState")
 
+ElmArchFrameBufferType = TypeVar("ElmArchFrameBufferType", bound=np.generic)
 
-def elm_architecture_mouse_callback_factory(
-  window_name: str,
+def elm_architecture_factory(
+  source_frame_buffer: NDArray[ElmArchFrameBufferType],
   init_state: Callable[[], ElmArchState],
-  updated_state: Callable[[ElmArchState, OpenCvMouseEvent], ElmArchState],
-  view_state: Callable[[ElmArchState, str], None],
-) -> Callable[[int, int, int, int, Any], None]:
+  updated_state: Callable[
+    [ElmArchState, NDArray[ElmArchFrameBufferType], ElmArchEvent],
+    ElmArchState
+  ],
+  view_state: Callable[
+    [ElmArchState, NDArray[ElmArchFrameBufferType]],
+    NDArray[np.uint8]
+  ],
+) -> ElmArchCallback:
   state = init_state()
+  updated_frame_buffer = source_frame_buffer.copy()
+
+  # Create this once, so that it does not need to be created for each frame
+  updated_frame_buffer_event = ElmArchSourceFrameBufferUpdatedEvent()
+
+  def __elm_architecture_handle_event(event: ElmArchEvent) -> None:
+    nonlocal state, source_frame_buffer, updated_frame_buffer
+    # Don't update the state right away to guarantee that view_state_result function is called
+    # with the state updated for this event. This will prevent view state to be called with
+    # state created by another concurrent event.
+    new_state = updated_state(
+      state,
+      source_frame_buffer,
+      event
+    )
+    view_state_result = view_state(new_state, source_frame_buffer)
+    np.copyto(dst=updated_frame_buffer, src=view_state_result)  # TODO: update cv2 window insead of copying?
+    state = new_state
+
+  def __elm_architecture_handle_source_frame_buffer_update() -> None:
+    nonlocal updated_frame_buffer_event
+    __elm_architecture_handle_event(updated_frame_buffer_event)
 
   def __elm_architecture_mouse_callback(
     mouse_event: int,
@@ -65,11 +106,17 @@ def elm_architecture_mouse_callback_factory(
     flags: int,
     _userdata: Any,  # noqa: ANN401
   ) -> None:
-    nonlocal state
-    state = updated_state(state, OpenCvMouseEvent(mouse_event, x, y, flags))
-    view_state(state, window_name)
+    __elm_architecture_handle_event(ElmArchOpenCvMouseEvent(mouse_event, x, y, flags))
 
-  return __elm_architecture_mouse_callback
+  # Make sure that the functions run for the first frame.
+  # After this updated_frame_buffer will definitely have NDArray[np.uint8] type,
+  # so silence the type error
+  __elm_architecture_handle_source_frame_buffer_update()
+  return ElmArchCallback(
+    __elm_architecture_mouse_callback,
+    __elm_architecture_handle_source_frame_buffer_update,
+    updated_frame_buffer,  # type: ignore [arg-type]
+  )
 
 
 # %% [markdown]
@@ -82,7 +129,6 @@ def elm_architecture_mouse_callback_factory(
 # %%
 @dataclass(frozen=True)
 class RectSelectionState:
-  original_image: NDArray[np.float64]
   is_selecting: bool = False
   should_save_selection: bool = False
   rect_start_coordinates: tuple[int, int] = (0, 0)
@@ -94,36 +140,49 @@ class RectSelectionState:
 
 
 # %%
-def rect_seclection_elm_updated_state(state: RectSelectionState, event: OpenCvMouseEvent) -> RectSelectionState:
-  if event.mouse_event == cv2.EVENT_LBUTTONDOWN:
-    is_selecting = True
-    should_save_selection = False
-    rect_start_coordinates = (event.x, event.y)
-    rect_end_coordinates = (event.x, event.y)
-  elif event.mouse_event == cv2.EVENT_LBUTTONUP and state.is_selecting:
-    is_selecting = False
-    should_save_selection = True
-    rect_start_coordinates = state.rect_start_coordinates
-    # Note, these coordinates can be out of the image bounds.
-    # It is the responsibility of the view function to apply
-    # the correct coordinates when augmenting the image
-    rect_end_coordinates = (event.x, event.y)
-  elif event.mouse_event == cv2.EVENT_MOUSEMOVE and state.is_selecting:
-    is_selecting = True
-    should_save_selection = False
-    rect_start_coordinates = state.rect_start_coordinates
-    # Note, these coordinates can be out of the image bounds.
-    # It is the responsibility of the view function to apply
-    # the correct coordinates when augmenting the image
-    rect_end_coordinates = (event.x, event.y)
-  else:
-    is_selecting = state.is_selecting
-    should_save_selection = False
-    rect_start_coordinates = state.rect_start_coordinates
-    rect_end_coordinates = state.rect_end_coordinates
+def rect_seclection_elm_updated_state(
+  state: RectSelectionState,
+  _source_frame_buffer: NDArray[np.generic],
+  event: ElmArchEvent
+) -> RectSelectionState:
+  match event:
+    case ElmArchOpenCvMouseEvent() as me:
+      if me.mouse_event == cv2.EVENT_LBUTTONDOWN:
+        is_selecting = True
+        should_save_selection = False
+        rect_start_coordinates = (event.x, event.y)
+        rect_end_coordinates = (event.x, event.y)
+      elif me.mouse_event == cv2.EVENT_LBUTTONUP and state.is_selecting:
+        is_selecting = False
+        should_save_selection = True
+        rect_start_coordinates = state.rect_start_coordinates
+        # Note, these coordinates can be out of the image bounds.
+        # It is the responsibility of the view function to apply
+        # the correct coordinates when augmenting the image
+        rect_end_coordinates = (event.x, event.y)
+      elif me.mouse_event == cv2.EVENT_MOUSEMOVE and state.is_selecting:
+        is_selecting = True
+        should_save_selection = False
+        rect_start_coordinates = state.rect_start_coordinates
+        # Note, these coordinates can be out of the image bounds.
+        # It is the responsibility of the view function to apply
+        # the correct coordinates when augmenting the image
+        rect_end_coordinates = (event.x, event.y)
+      else:
+        is_selecting = state.is_selecting
+        should_save_selection = False
+        rect_start_coordinates = state.rect_start_coordinates
+        rect_end_coordinates = state.rect_end_coordinates
+    case _:
+        is_selecting = state.is_selecting
+        # When frame buffer is updated, it is possible that the current state is set to save the selection.
+        # In this case, each frame will be saved. It is safe to set this to False here, because the elm arch
+        # implementation guarantees that the view function is called with the state returned by this function
+        should_save_selection = False
+        rect_start_coordinates = state.rect_start_coordinates
+        rect_end_coordinates = state.rect_end_coordinates
 
   return RectSelectionState(
-    original_image=state.original_image,
     is_selecting=is_selecting,
     should_save_selection=should_save_selection,
     rect_start_coordinates=rect_start_coordinates,
@@ -137,7 +196,7 @@ def rect_seclection_elm_updated_state(state: RectSelectionState, event: OpenCvMo
 
 # %%
 def calculate_selection_rectangle(
-  source_image: NDArray[np.float64],
+  source_image: NDArray[np.generic],
   rect_start_coordinates: tuple[int, int],
   rect_end_coordinates: tuple[int, int],
 ) -> tuple[tuple[int, int], tuple[int, int]]:
@@ -206,56 +265,134 @@ def save_selection(
 
 def rect_seclection_elm_view_state(
   state: RectSelectionState,
-  window_name: str,
-) -> None:
+  source_frame_buffer: NDArray[np.uint8],
+) -> NDArray[np.uint8]:
   if state.is_selecting:
     # All the oprations need to be performed on the image copy,
     # so that the UI transformations can be applied again to the
-    # original image, when this function is executed for the next event
-    image_with_selection = state.original_image.copy()
+    # original image, when this function is executed for the next event.
+    # image_with_selection = source_frame_buffer.copy().astype(np.float64) / 255.0
+    image_with_selection = source_frame_buffer.astype(np.float64) / 255.0  # TODO: why is it okay to not copy?
     _ = draw_selection_rectangle(
       image_with_selection, state.rect_start_coordinates, state.rect_end_coordinates, thickness=2
     )
-    # Display the update to the window
-    cv2.imshow(window_name, image_with_selection)
-
+    return (image_with_selection * 255.0).astype(np.uint8)
   else:
     if state.should_save_selection:
       ((selection_rect_start_x, selection_rect_start_y), (selection_rect_end_x, selection_rect_end_y)) = (
         calculate_selection_rectangle(
-          state.original_image,
+          source_frame_buffer,
           state.rect_start_coordinates,
           state.rect_end_coordinates,
         )
       )
-      selection_float = state.original_image[
+      selection_float = source_frame_buffer[
         selection_rect_start_y:selection_rect_end_y, selection_rect_start_x:selection_rect_end_x, ...
       ]
-      selection = (selection_float * 255.0).astype(np.uint8)
+      selection = selection_float
       save_selection(selection)
-
-    # Display the original image to the window
-    cv2.imshow(window_name, state.original_image)
+    return source_frame_buffer
 
 
 # %% [markdown]
-# # Cropper window
+# # Run cropper
+#
+# This section puts all the pieces together
 
 # %%
-source_float = source.astype(np.float64) / 255.0
+cropper_window_name = "Cropper"
+
+# %% [markdown]
+# ## Static image
+
+# %%
+images_path = Path(DATA_PATH) / "images"
+source_image_path = images_path / "sample.jpg"
+
+source: NDArray[np.uint8] = cv2.imread(str(source_image_path), cv2.IMREAD_ANYCOLOR)  # type: ignore [assignment]
+
+
+# %%
+elm_arch_static_image = elm_architecture_factory(
+  source,
+  init_state=lambda: RectSelectionState(),
+  updated_state=rect_seclection_elm_updated_state,
+  view_state=rect_seclection_elm_view_state,
+)
 
 cv2.imshow(cropper_window_name, source)
 cv2.setMouseCallback(
   cropper_window_name,
-  elm_architecture_mouse_callback_factory(
-    cropper_window_name,
-    init_state=lambda: RectSelectionState(source_float),
-    updated_state=rect_seclection_elm_updated_state,
-    view_state=rect_seclection_elm_view_state,
-  ),
+  elm_arch_static_image.cv2_mouse_callback
 )
 cv2.waitKey(0)
 cv2.destroyWindow(cropper_window_name)
 
+# try:
+#   cv2.destroyWindow(cropper_window_name)
+#   webcam_cap.release()
+# except:
+#   pass
+
+# %% [markdown]
+# ## Webcam
+
 # %%
-# TODO: make the selection also work for video (will need to pass the original frame to the view function)
+ESCAPE_KEY_CODE: Final[Literal[27]] = 27
+webcam_id = 0
+
+# %%
+# webcam_cap = cv2.VideoCapture(webcam_id)
+
+# # Set resolution to 1080p
+# desired_width = 1920
+# desired_height = 1080
+# if webcam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, desired_width):
+#   print(f"Set width to {desired_width}")
+# else:
+#   print("Failed to set custom width")
+
+# if webcam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, desired_height):
+#   print(f"Set height to {desired_height}")
+# else:
+#   print("Failed to set custom height")
+
+# webcam_frame_width = math.floor(webcam_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+# webcam_frame_height = math.floor(webcam_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+# fps: float = webcam_cap.get(cv2.CAP_PROP_FPS)
+# fps = 30.0 if math.isclose(fps, 0.0, rel_tol=0.0, abs_tol=0e-05) else fps
+# frame_duration_ms = math.floor(1000 / fps)
+# print(f"Camera FPS: {fps} ({frame_duration_ms} ms per frame)")
+
+# frame_buffer: NDArray[np.uint8] = np.full((webcam_frame_height, webcam_frame_width, 3), 0, dtype=np.uint8)
+# elm_arch_video = elm_architecture_factory(
+#   source_frame_buffer=frame_buffer,
+#   init_state=lambda: RectSelectionState(),
+#   updated_state=rect_seclection_elm_updated_state,
+#   view_state=rect_seclection_elm_view_state,
+# )
+# cv2.namedWindow(cropper_window_name, cv2.WINDOW_AUTOSIZE)
+# cv2.setMouseCallback(
+#   cropper_window_name,
+#   elm_arch_video.cv2_mouse_callback
+# )
+
+# while webcam_cap.isOpened():
+#   has_frame, frame = webcam_cap.read()
+
+#   if has_frame:
+#     np.copyto(dst=frame_buffer, src=frame)
+#     elm_arch_video.signal_source_frame_buffer_updated()
+#     cv2.imshow(cropper_window_name, elm_arch_video.updated_ui_frame_buffer)
+#     key_code = cv2.waitKey(frame_duration_ms)
+#     if key_code == ESCAPE_KEY_CODE:
+#       break
+#   else:
+#     break
+
+# try:
+#   cv2.destroyWindow(cropper_window_name)
+#   webcam_cap.release()
+# except:
+#   pass
