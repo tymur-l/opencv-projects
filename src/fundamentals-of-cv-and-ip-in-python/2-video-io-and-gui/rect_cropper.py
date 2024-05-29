@@ -239,16 +239,20 @@ def save_selection(
   roi: NDArray[np.generic],
   save_dir: Path = Path(),
 ) -> None:
-  with NamedTemporaryFile(
-    "wb",
-    dir=save_dir,
-    prefix="selection_",
-    # suffix=".jpg",
-    suffix=".png",
-    delete=False,
-  ) as f:
-    tempfile_path = f.name
-  cv2.imwrite(tempfile_path, roi, params=[cv2.IMWRITE_JPEG_QUALITY, 100])
+  if roi.size != 0:
+    try:
+      with NamedTemporaryFile(
+        "wb",
+        dir=save_dir,
+        prefix="selection_",
+        # suffix=".jpg",
+        suffix=".png",
+        delete=False,
+      ) as f:
+        tempfile_path = f.name
+      cv2.imwrite(tempfile_path, roi, params=[cv2.IMWRITE_JPEG_QUALITY, 100])
+    except Exception as e:  # noqa: BLE001
+      print(f"Could not save the selected region due to the error: {e}")
 
 
 def rect_seclection_elm_view_state(
