@@ -66,6 +66,12 @@ while webcam_cap.isOpened():
 
 try:
   cv2.destroyWindow(camera_window_name)
-  webcam_cap.release()
-except:
-  pass
+except Exception as e:
+  print(f"Error happened when trying to destroy {camera_window_name}:\n{e}")
+  raise
+finally:
+  try:
+    webcam_cap.release()
+  except Exception as e:
+    print(f"Error happened when trying to release video capture:\n{e}")
+    raise
