@@ -30,10 +30,12 @@ if TYPE_CHECKING:
 class ElmArchEvent(metaclass=ABCMeta):  # noqa: B024
   pass
 
+
 @dataclass(frozen=True)
 @final
 class ElmArchSourceFrameBufferUpdatedEvent(ElmArchEvent):
   pass
+
 
 @dataclass(frozen=True)
 @final
@@ -46,6 +48,7 @@ class ElmArchOpenCvMouseEvent(ElmArchEvent):
 
 # %%
 ElmArchFrameBufferType = TypeVar("ElmArchFrameBufferType", bound=np.generic)
+
 
 @dataclass(frozen=True)
 @final
@@ -60,18 +63,13 @@ if TYPE_CHECKING:
 else:
   ElmArchState = TypeVar("ElmArchState")
 
+
 def elm_architecture_window(
   window_name: str,
   init_source_frame_buffer: NDArray[ElmArchFrameBufferType],
   init_state: Callable[[], ElmArchState],
-  updated_state: Callable[
-    [ElmArchState, NDArray[ElmArchFrameBufferType], ElmArchEvent],
-    ElmArchState
-  ],
-  view_state: Callable[
-    [ElmArchState, NDArray[ElmArchFrameBufferType]],
-    NDArray[np.generic]
-  ],
+  updated_state: Callable[[ElmArchState, NDArray[ElmArchFrameBufferType], ElmArchEvent], ElmArchState],
+  view_state: Callable[[ElmArchState, NDArray[ElmArchFrameBufferType]], NDArray[np.generic]],
 ) -> ElmArchCallback:
   state = init_state()
   latest_source_frame_buffer = init_source_frame_buffer
@@ -84,18 +82,12 @@ def elm_architecture_window(
     # Don't update the state right away to guarantee that view_state_result function is called
     # with the state updated for this event. This will prevent view state to be called with
     # state created by another concurrent event.
-    new_state = updated_state(
-      state,
-      latest_source_frame_buffer,
-      event
-    )
+    new_state = updated_state(state, latest_source_frame_buffer, event)
     view_state_result = view_state(new_state, latest_source_frame_buffer)
     cv2.imshow(window_name, view_state_result)
     state = new_state
 
-  def __elm_architecture_handle_source_frame_buffer_update(
-    frame: NDArray[ElmArchFrameBufferType]
-  ) -> None:
+  def __elm_architecture_handle_source_frame_buffer_update(frame: NDArray[ElmArchFrameBufferType]) -> None:
     nonlocal latest_source_frame_buffer, updated_frame_buffer_event
     latest_source_frame_buffer = frame
     __elm_architecture_handle_event(updated_frame_buffer_event)
@@ -139,9 +131,7 @@ class RectSelectionState:
 
 # %%
 def rect_seclection_elm_updated_state(
-  state: RectSelectionState,
-  _source_frame_buffer: NDArray[np.generic],
-  event: ElmArchEvent
+  state: RectSelectionState, _source_frame_buffer: NDArray[np.generic], event: ElmArchEvent
 ) -> RectSelectionState:
   match event:
     case ElmArchOpenCvMouseEvent() as me:
@@ -172,13 +162,13 @@ def rect_seclection_elm_updated_state(
         rect_start_coordinates = state.rect_start_coordinates
         rect_end_coordinates = state.rect_end_coordinates
     case _:
-        is_selecting = state.is_selecting
-        # When frame buffer is updated, it is possible that the current state is set to save the selection.
-        # In this case, each frame will be saved. It is safe to set this to False here, because the elm arch
-        # implementation guarantees that the view function is called with the state returned by this function
-        should_save_selection = False
-        rect_start_coordinates = state.rect_start_coordinates
-        rect_end_coordinates = state.rect_end_coordinates
+      is_selecting = state.is_selecting
+      # When frame buffer is updated, it is possible that the current state is set to save the selection.
+      # In this case, each frame will be saved. It is safe to set this to False here, because the elm arch
+      # implementation guarantees that the view function is called with the state returned by this function
+      should_save_selection = False
+      rect_start_coordinates = state.rect_start_coordinates
+      rect_end_coordinates = state.rect_end_coordinates
 
   return RectSelectionState(
     is_selecting=is_selecting,
@@ -269,8 +259,8 @@ def rect_seclection_elm_view_state(
     # All the oprations need to be performed on the image copy,
     # so that the UI transformations can be applied again to the
     # original image, when this function is executed for the next event.
-    # image_with_selection = source_frame_buffer.copy().astype(np.float64) / 255.0
-    image_with_selection = source_frame_buffer.astype(np.float64) / 255.0  # TODO: why is it okay to not copy?
+    # numpy makes a copy of an array, when casting it to a different type
+    image_with_selection = source_frame_buffer.astype(np.float64) / 255.0
     _ = draw_selection_rectangle(
       image_with_selection, state.rect_start_coordinates, state.rect_end_coordinates, thickness=2
     )
@@ -319,10 +309,7 @@ elm_arch_static_image = elm_architecture_window(
   view_state=rect_seclection_elm_view_state,
 )
 
-cv2.setMouseCallback(
-  cropper_window_name,
-  elm_arch_static_image.cv2_mouse_callback
-)
+cv2.setMouseCallback(cropper_window_name, elm_arch_static_image.cv2_mouse_callback)
 cv2.waitKey(0)
 
 try:
@@ -376,10 +363,7 @@ webcam_id = 0
 #   view_state=rect_seclection_elm_view_state,
 # )
 # cv2.namedWindow(cropper_window_name, cv2.WINDOW_AUTOSIZE)
-# cv2.setMouseCallback(
-#   cropper_window_name,
-#   elm_arch_video.cv2_mouse_callback
-# )
+# cv2.setMouseCallback(cropper_window_name, elm_arch_video.cv2_mouse_callback)
 
 # while webcam_cap.isOpened():
 #   has_frame, frame = webcam_cap.read()
