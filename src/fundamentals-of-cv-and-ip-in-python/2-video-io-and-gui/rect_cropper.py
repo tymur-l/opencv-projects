@@ -4,7 +4,6 @@
 # This notebook opens an image (or a videostream) in a window and lets the user select a rectangular area on the image with a mouse by holding left mouse button. When the button is release, the selected area from the original image is saved to as a new image file.
 
 # %%
-import math
 from abc import ABCMeta
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -34,7 +33,6 @@ class ElmArchEvent(metaclass=ABCMeta):  # noqa: B024
 @dataclass(frozen=True)
 @final
 class ElmArchSourceFrameBufferUpdatedEvent(ElmArchEvent):
-  # TODO: make the event store an updated frame?
   pass
 
 @dataclass(frozen=True)
@@ -47,12 +45,13 @@ class ElmArchOpenCvMouseEvent(ElmArchEvent):
 
 
 # %%
+ElmArchFrameBufferType = TypeVar("ElmArchFrameBufferType", bound=np.generic)
+
 @dataclass(frozen=True)
 @final
 class ElmArchCallback:
   cv2_mouse_callback: Callable[[int, int, int, int, Any], None]
-  signal_source_frame_buffer_updated: Callable[[], None]
-  updated_ui_frame_buffer: NDArray[np.uint8]
+  update_source_frame_buffer: Callable[[NDArray[ElmArchFrameBufferType]], None]
 
 
 # %%
@@ -61,10 +60,9 @@ if TYPE_CHECKING:
 else:
   ElmArchState = TypeVar("ElmArchState")
 
-ElmArchFrameBufferType = TypeVar("ElmArchFrameBufferType", bound=np.generic)
-
-def elm_architecture_factory(
-  source_frame_buffer: NDArray[ElmArchFrameBufferType],
+def elm_architecture_window(
+  window_name: str,
+  init_source_frame_buffer: NDArray[ElmArchFrameBufferType],
   init_state: Callable[[], ElmArchState],
   updated_state: Callable[
     [ElmArchState, NDArray[ElmArchFrameBufferType], ElmArchEvent],
@@ -72,31 +70,34 @@ def elm_architecture_factory(
   ],
   view_state: Callable[
     [ElmArchState, NDArray[ElmArchFrameBufferType]],
-    NDArray[np.uint8]
+    NDArray[np.generic]
   ],
 ) -> ElmArchCallback:
   state = init_state()
-  updated_frame_buffer = source_frame_buffer.copy()
+  latest_source_frame_buffer = init_source_frame_buffer
 
   # Create this once, so that it does not need to be created for each frame
   updated_frame_buffer_event = ElmArchSourceFrameBufferUpdatedEvent()
 
   def __elm_architecture_handle_event(event: ElmArchEvent) -> None:
-    nonlocal state, source_frame_buffer, updated_frame_buffer
+    nonlocal state, latest_source_frame_buffer
     # Don't update the state right away to guarantee that view_state_result function is called
     # with the state updated for this event. This will prevent view state to be called with
     # state created by another concurrent event.
     new_state = updated_state(
       state,
-      source_frame_buffer,
+      latest_source_frame_buffer,
       event
     )
-    view_state_result = view_state(new_state, source_frame_buffer)
-    np.copyto(dst=updated_frame_buffer, src=view_state_result)  # TODO: update cv2 window insead of copying?
+    view_state_result = view_state(new_state, latest_source_frame_buffer)
+    cv2.imshow(window_name, view_state_result)
     state = new_state
 
-  def __elm_architecture_handle_source_frame_buffer_update() -> None:
-    nonlocal updated_frame_buffer_event
+  def __elm_architecture_handle_source_frame_buffer_update(
+    frame: NDArray[ElmArchFrameBufferType]
+  ) -> None:
+    nonlocal latest_source_frame_buffer, updated_frame_buffer_event
+    latest_source_frame_buffer = frame
     __elm_architecture_handle_event(updated_frame_buffer_event)
 
   def __elm_architecture_mouse_callback(
@@ -108,14 +109,11 @@ def elm_architecture_factory(
   ) -> None:
     __elm_architecture_handle_event(ElmArchOpenCvMouseEvent(mouse_event, x, y, flags))
 
-  # Make sure that the functions run for the first frame.
-  # After this updated_frame_buffer will definitely have NDArray[np.uint8] type,
-  # so silence the type error
-  __elm_architecture_handle_source_frame_buffer_update()
+  # Make sure that the functions run for the first frame
+  __elm_architecture_handle_source_frame_buffer_update(latest_source_frame_buffer)
   return ElmArchCallback(
     __elm_architecture_mouse_callback,
     __elm_architecture_handle_source_frame_buffer_update,
-    updated_frame_buffer,  # type: ignore [arg-type]
   )
 
 
@@ -313,26 +311,30 @@ source: NDArray[np.uint8] = cv2.imread(str(source_image_path), cv2.IMREAD_ANYCOL
 
 
 # %%
-elm_arch_static_image = elm_architecture_factory(
+elm_arch_static_image = elm_architecture_window(
+  cropper_window_name,
   source,
   init_state=lambda: RectSelectionState(),
   updated_state=rect_seclection_elm_updated_state,
   view_state=rect_seclection_elm_view_state,
 )
 
-cv2.imshow(cropper_window_name, source)
 cv2.setMouseCallback(
   cropper_window_name,
   elm_arch_static_image.cv2_mouse_callback
 )
 cv2.waitKey(0)
-cv2.destroyWindow(cropper_window_name)
 
-# try:
-#   cv2.destroyWindow(cropper_window_name)
-#   webcam_cap.release()
-# except:
-#   pass
+try:
+  cv2.destroyWindow(cropper_window_name)
+except Exception as e:
+  print(f"Error happened when trying to destroy {cropper_window_name}:\n{e}")
+  raise
+
+# %% [markdown]
+# ### Static image cropping demo
+#
+# ![Rect static image cropper demo](./media/rect_image_cropper.gif)
 
 # %% [markdown]
 # ## Webcam
@@ -344,9 +346,9 @@ webcam_id = 0
 # %%
 # webcam_cap = cv2.VideoCapture(webcam_id)
 
-# # Set resolution to 1080p
-# desired_width = 1920
-# desired_height = 1080
+# # Set resolution to 720p
+# desired_width = 1280
+# desired_height = 720
 # if webcam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, desired_width):
 #   print(f"Set width to {desired_width}")
 # else:
@@ -366,8 +368,9 @@ webcam_id = 0
 # print(f"Camera FPS: {fps} ({frame_duration_ms} ms per frame)")
 
 # frame_buffer: NDArray[np.uint8] = np.full((webcam_frame_height, webcam_frame_width, 3), 0, dtype=np.uint8)
-# elm_arch_video = elm_architecture_factory(
-#   source_frame_buffer=frame_buffer,
+# elm_arch_video = elm_architecture_window(
+#   cropper_window_name,
+#   init_source_frame_buffer=frame_buffer,
 #   init_state=lambda: RectSelectionState(),
 #   updated_state=rect_seclection_elm_updated_state,
 #   view_state=rect_seclection_elm_view_state,
@@ -382,9 +385,7 @@ webcam_id = 0
 #   has_frame, frame = webcam_cap.read()
 
 #   if has_frame:
-#     np.copyto(dst=frame_buffer, src=frame)
-#     elm_arch_video.signal_source_frame_buffer_updated()
-#     cv2.imshow(cropper_window_name, elm_arch_video.updated_ui_frame_buffer)
+#     elm_arch_video.update_source_frame_buffer(frame)
 #     key_code = cv2.waitKey(frame_duration_ms)
 #     if key_code == ESCAPE_KEY_CODE:
 #       break
@@ -393,6 +394,12 @@ webcam_id = 0
 
 # try:
 #   cv2.destroyWindow(cropper_window_name)
-#   webcam_cap.release()
-# except:
-#   pass
+# except Exception as e:
+#   print(f"Error happened when trying to destroy {cropper_window_name}:\n{e}")
+#   raise
+# finally:
+#   try:
+#     webcam_cap.release()
+#   except Exception as e:
+#     print(f"Error happened when trying to release video capture:\n{e}")
+#     raise

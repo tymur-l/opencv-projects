@@ -1,1 +1,1 @@
-DATA_PATH="./course/data/"
+DATA_PATH="./data/"
