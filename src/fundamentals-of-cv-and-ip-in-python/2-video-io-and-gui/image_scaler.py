@@ -103,3 +103,8 @@ cv2.imshow(scaler_window_name, image)
 cv2.waitKey(0)
 
 cv2.destroyWindow(scaler_window_name)
+
+# %% [markdown]
+# ## Static image scaling demo
+#
+# ![Static image scaing demo](./media/scaler.gif)
