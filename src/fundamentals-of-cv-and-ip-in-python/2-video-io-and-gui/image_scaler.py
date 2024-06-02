@@ -31,7 +31,6 @@ def rescale_image(source_image: NDArray[ImElementType], scale_delta: float, *, u
 @dataclass(frozen=True)
 @final
 class ScalerCallbacks:
-  # TODO: fix callback types
   on_change_image_scale: Callable[[int], None]
   on_change_image_scale_type: Callable[[int], None]
 
@@ -56,12 +55,12 @@ def scaler_callbacks(window_name: str, source_image: NDArray[np.generic]) -> Sca
       # If the image is scaled down to 0, draw a fake 1x1 image
       cv2.imshow(window_name, np.zeros(shape=(1, 1)))
 
-  def __on_change_image_scale(selected_scale_delta_percent: int, *args) -> None:
+  def __on_change_image_scale(selected_scale_delta_percent: int) -> None:
     nonlocal scale_delta
     scale_delta = selected_scale_delta_percent / 100.0
     __rescale_and_draw()
 
-  def __on_change_image_scale_type(selected_image_scale_type: int, *args) -> None:
+  def __on_change_image_scale_type(selected_image_scale_type: int) -> None:
     nonlocal scale_up
     scale_up = selected_image_scale_type == 0
     __rescale_and_draw()
