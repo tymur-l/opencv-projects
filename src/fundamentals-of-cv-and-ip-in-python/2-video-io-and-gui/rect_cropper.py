@@ -4,6 +4,7 @@
 # This notebook opens an image (or a videostream) in a window and lets the user select a rectangular area on the image with a mouse by holding left mouse button. When the button is release, the selected area from the original image is saved to as a new image file.
 
 # %%
+import math
 from abc import ABCMeta
 from collections.abc import Callable
 from dataclasses import dataclass
