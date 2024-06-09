@@ -80,7 +80,7 @@ padded_original_image = cv2.copyMakeBorder(
   border_size,
   borderType=cv2.BORDER_CONSTANT,
   value=0,
-)
+)  # type: ignore [call-overload]
 padded_original_image_bgr = np.tile(padded_original_image[..., np.newaxis], (1, 1, 3)) * 255
 padded_dilated_image = np.zeros_like(padded_original_image)
 
@@ -92,7 +92,7 @@ dilation_video_path = video_save_path / "dilation.mp4"
 # dilation_video_path = video_save_path / "dilation.avi"
 dilation_video_writer = cv2.VideoWriter(
   str(dilation_video_path),
-  fourcc=cv2.VideoWriter_fourcc("a", "v", "c", "1"),
+  fourcc=cv2.VideoWriter_fourcc("a", "v", "c", "1"),  # type: ignore [attr-defined]
   # # if avc1 codec does not work for you, use MJPG (should be the most portable one)
   # # AND save the video as .avi instead
   # fourcc=cv2.VideoWriter_fourcc("M", "J", "P", "G"),
@@ -260,7 +260,7 @@ padded_original_image = cv2.copyMakeBorder(
   border_size,
   borderType=cv2.BORDER_CONSTANT,
   value=1,
-)
+)  # type: ignore [call-overload]
 padded_original_image_bgr = np.tile(padded_original_image[..., np.newaxis], (1, 1, 3)) * 255
 padded_eroded_image = np.zeros_like(padded_original_image)
 
@@ -272,7 +272,7 @@ erosion_video_path = video_save_path / "erosion.mp4"
 # eroded_video_path = video_save_path / "erosion.avi"
 erosion_video_writer = cv2.VideoWriter(
   str(erosion_video_path),
-  fourcc=cv2.VideoWriter_fourcc("a", "v", "c", "1"),
+  fourcc=cv2.VideoWriter_fourcc("a", "v", "c", "1"),  # type: ignore [attr-defined]
   # # if avc1 codec does not work for you, use MJPG (should be the most portable one)
   # # AND save the video as .avi instead
   # fourcc=cv2.VideoWriter_fourcc("M", "J", "P", "G"),
@@ -412,7 +412,7 @@ plt.imshow(eroded_im)
 # %%
 Video(
   erosion_video_path,
-  embed=True,
+  embed=True, "Video" 
   width=frame_dim_x * video_dispaly_scaling_factor,
   height=frame_dim_y * video_dispaly_scaling_factor,
 )
