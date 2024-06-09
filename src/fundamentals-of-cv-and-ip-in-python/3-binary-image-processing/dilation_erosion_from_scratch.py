@@ -19,24 +19,24 @@
 from pathlib import Path
 
 import cv2
-from IPython.display import Video
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+from IPython.display import Video
 
 # %%
 mpl.rcParams["figure.figsize"] = (6.0, 6.0)
 mpl.rcParams["image.cmap"] = "gray"
 
 # %%
-original_image = np.zeros((10,10), dtype=np.uint8)
+original_image = np.zeros((10, 10), dtype=np.uint8)
 image_height, image_width = original_image.shape[:2]
 plt.imshow(original_image)
 
 # %%
 original_image[0, 1] = 1
-original_image[-1, 0]= 1
-original_image[-2, -1]=1
+original_image[-1, 0] = 1
+original_image[-2, -1] = 1
 original_image[2, 2] = 1
 original_image[5:8, 5:8] = 1
 
@@ -205,11 +205,9 @@ try:
       frame = np.zeros((frame_dim_y, frame_dim_x, 3), dtype=np.uint8)
       padded_conv_resized_height, padded_conv_resized_width = padded_conv_output_bgr_resized.shape[:2]
       frame[0:padded_conv_resized_height, 0:padded_conv_resized_width, ...] = padded_conv_on_original_image_resized
-      frame[
-        0:padded_conv_resized_height,
-        padded_conv_resized_width + vertical_split_size_px:,
-        ...
-      ] = padded_conv_output_bgr_resized
+      frame[0:padded_conv_resized_height, padded_conv_resized_width + vertical_split_size_px :, ...] = (
+        padded_conv_output_bgr_resized
+      )
 
       if conv_res:
         # If the result is white, make the output 5 time slower
@@ -227,12 +225,17 @@ finally:
 
 # %%
 # Display final image (cropped)
-dilated_im = padded_dilated_image[border_size:border_size + image_height, border_size:border_size + image_width]
+dilated_im = padded_dilated_image[border_size : border_size + image_height, border_size : border_size + image_width]
 plt.imshow(dilated_im)
 
 
 # %%
-Video(dilation_video_path, embed=True, width=frame_dim_x * video_dispaly_scaling_factor, height=frame_dim_y * video_dispaly_scaling_factor)
+Video(
+  dilation_video_path,
+  embed=True,
+  width=frame_dim_x * video_dispaly_scaling_factor,
+  height=frame_dim_y * video_dispaly_scaling_factor,
+)
 
 # %% [markdown]
 # ## Erosion
@@ -382,11 +385,9 @@ try:
       frame = np.zeros((frame_dim_y, frame_dim_x, 3), dtype=np.uint8)
       padded_conv_resized_height, padded_conv_resized_width = padded_conv_output_bgr_resized.shape[:2]
       frame[0:padded_conv_resized_height, 0:padded_conv_resized_width, ...] = padded_conv_on_original_image_resized
-      frame[
-        0:padded_conv_resized_height,
-        padded_conv_resized_width + vertical_split_size_px:,
-        ...
-      ] = padded_conv_output_bgr_resized
+      frame[0:padded_conv_resized_height, padded_conv_resized_width + vertical_split_size_px :, ...] = (
+        padded_conv_output_bgr_resized
+      )
 
       if 1 in applied_kernel[kernel != 0]:
         # If the window intersects with at least 1 white pixel, make the output 5 time slower
@@ -404,9 +405,14 @@ finally:
 
 # %%
 # Display final image (cropped)
-eroded_im = padded_eroded_image[border_size:border_size + image_height, border_size:border_size + image_width]
+eroded_im = padded_eroded_image[border_size : border_size + image_height, border_size : border_size + image_width]
 plt.imshow(eroded_im)
 
 
 # %%
-Video(erosion_video_path, embed=True, width=frame_dim_x * video_dispaly_scaling_factor, height=frame_dim_y * video_dispaly_scaling_factor)
+Video(
+  erosion_video_path,
+  embed=True,
+  width=frame_dim_x * video_dispaly_scaling_factor,
+  height=frame_dim_y * video_dispaly_scaling_factor,
+)
