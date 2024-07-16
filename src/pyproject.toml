@@ -41,6 +41,7 @@ ignore = [
   "D101", # Allow public classes without docstrings
   "D103", # Allow public functions without docstrings
   "RET505", # Allow to have else after return for a more functional style
+  "TRY002", # No need to create own exception classes
 ]
 
 [tool.ruff.format]
