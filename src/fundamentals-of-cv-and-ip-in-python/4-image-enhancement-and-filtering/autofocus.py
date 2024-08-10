@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dataPath import DATA_PATH
 from numpy.typing import NDArray
+from tqdm.notebook import tqdm
 
 # %%
 source_video_path = Path(DATA_PATH) / "videos" / "focus-test.mp4"
@@ -268,7 +269,7 @@ cap.release()
 # Resize the resolution to HD, so that the algorithm will run more efficiently
 resized_frame = cv2.resize(frame, dsize=(1280, 720), interpolation=cv2.INTER_AREA)
 
-# Original dimensions of the object
+# # Original dimensions of the object
 # top = 450
 # left = 1300
 # bottom = 1600
@@ -329,33 +330,38 @@ try:
   sum_modified_laplacians = np.zeros(total_frames)
 
   frame_grabbed, frame = cap.read()
-  while frame_grabbed:
-    next_frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-    current_frame_number = next_frame_number - 1
+  with tqdm(
+    total=total_frames,
+    unit="frame",
+  ) as progress:
+    while frame_grabbed:
+      next_frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+      current_frame_number = next_frame_number - 1
 
-    resized_frame = cv2.resize(frame, dsize=(1280, 720), interpolation=cv2.INTER_AREA)
-    cropped_resized_frame = resized_frame[top:bottom, left:right, ...]
-    grayscaled_cropped_resized_frame = cv2.cvtColor(cropped_resized_frame, cv2.COLOR_BGR2GRAY)
+      resized_frame = cv2.resize(frame, dsize=(1280, 720), interpolation=cv2.INTER_AREA)
+      cropped_resized_frame = resized_frame[top:bottom, left:right, ...]
+      grayscaled_cropped_resized_frame = cv2.cvtColor(cropped_resized_frame, cv2.COLOR_BGR2GRAY)
 
-    current_frame_var_abs_laplacian = FocusMeasure(
-      frame_number=current_frame_number,
-      focus_measure=var_abs_laplacian(grayscaled_cropped_resized_frame),
-    )
-    current_frame_sum_modified_laplacian = FocusMeasure(
-      frame_number=current_frame_number,
-      focus_measure=sum_modified_laplacian(grayscaled_cropped_resized_frame),
-    )
+      current_frame_var_abs_laplacian = FocusMeasure(
+        frame_number=current_frame_number,
+        focus_measure=var_abs_laplacian(grayscaled_cropped_resized_frame),
+      )
+      current_frame_sum_modified_laplacian = FocusMeasure(
+        frame_number=current_frame_number,
+        focus_measure=sum_modified_laplacian(grayscaled_cropped_resized_frame),
+      )
 
-    var_abs_laplacians[current_frame_number] = current_frame_var_abs_laplacian.focus_measure
-    sum_modified_laplacians[current_frame_number] = current_frame_sum_modified_laplacian.focus_measure
+      var_abs_laplacians[current_frame_number] = current_frame_var_abs_laplacian.focus_measure
+      sum_modified_laplacians[current_frame_number] = current_frame_sum_modified_laplacian.focus_measure
 
-    if current_frame_var_abs_laplacian > most_focused_frame_var_abs_laplacian:
-      most_focused_frame_var_abs_laplacian = current_frame_var_abs_laplacian
+      if current_frame_var_abs_laplacian > most_focused_frame_var_abs_laplacian:
+        most_focused_frame_var_abs_laplacian = current_frame_var_abs_laplacian
 
-    if current_frame_sum_modified_laplacian > most_focused_frame_sum_modified_laplacian:
-      most_focused_frame_sum_modified_laplacian = current_frame_sum_modified_laplacian
+      if current_frame_sum_modified_laplacian > most_focused_frame_sum_modified_laplacian:
+        most_focused_frame_sum_modified_laplacian = current_frame_sum_modified_laplacian
 
-    frame_grabbed, frame = cap.read()
+      progress.update(1)
+      frame_grabbed, frame = cap.read()
 finally:
   cap.release()
 

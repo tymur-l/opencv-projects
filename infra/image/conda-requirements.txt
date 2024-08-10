@@ -8,6 +8,8 @@ matplotlib == 3.8.4
 scipy ==  1.13.0
 scikit-learn == 1.4.2
 seaborn == 0.13.2
+tqdm == 4.66.5
+types-tqdm == 4.66.0.20240417
 
 ## Additional CUDA dependencies that have not been installed by tensorflow CUDA
 nvidia::libnpp == 11.8.0.86
