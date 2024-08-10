@@ -279,7 +279,6 @@ left = 430
 bottom = 550
 right = 800
 
-# frame = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
 resized_frame_selected_object = cv2.rectangle(
   resized_frame, pt1=(left, top), pt2=(right, bottom), color=(0, 0, 255), thickness=3, lineType=cv2.LINE_AA
 )
