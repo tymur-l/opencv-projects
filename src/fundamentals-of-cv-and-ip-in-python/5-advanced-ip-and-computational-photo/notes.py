@@ -32,7 +32,7 @@
 #
 # Main advantage of using Hough transform - it is **insensitive to occlusion**.
 #
-# ### Example
+# ### Line example
 #
 # Equation of a line in polar coordinates:
 #
@@ -53,3 +53,14 @@
 # The algorithm uses the output of an edge detector (list of pixels that lie on an edge in the image: $[(x_1, y_1), \dots, (x_n, y_n)]$) as an evidence of the target shape. For each such pixel it substitutes values for independent bounded variables from a predefined list of values that cover the range evenly into the target shape formula. The output of this substitution for each pixel is a value of a depenent parameter (the values are also in a bounded range). When the substitution is performed for all edge pixels, the resulting set of parameters will have repetitions (i.e. curves that describe target shape). A repeated occurence of similar parameters indicates that the target shape described by these parameters fits the edge pixels of the image. In other words, multiple edge pixels provide evidence that the curve with the given set of parameters contains these edge pixels (or lies in the vicinity of the curve).
 #
 # As calculations are preformed for each edge pixel, the state of the number of curves that fit the current pixel + all the previous pixels is kept in the **accumulator**. Accumulator is an $n$-dimensional array, where $n$ is a number of parameters in the curve (e.g. there are 2 parameters for a line and 3 for a circle). Each axis in the accumulator corresponds to descrete values of a particular parameter of the curve. The size of each axis is determined by the user of the algorithm. Since the range can be infinite, it is expected that only some values of the range will be covered, however, the values must "strech" the whole range. Therefore, each bin in the accumulator corresponds to a set of parameters that define a unique curve. The accumulator is intialized to 0-s in the beginning. When the algorithm calculates parameters of the curve for an edge pixel, the value in corresponding bin is incremented. At the end, the algorithm returns a list of curve parameters, which have values in the bins above a user-defined threshold. These curves are the shapes detected by the Hough transform algorithm.
+#
+# ### Notes
+#
+# The quality of detected shapes depends on the quality of the edge map. In practice, users use Hough transform in the environment where they can obtain consistent edge maps or train an edge detector to detect specific types of edges.
+#
+# ### Useful links
+#
+# - [OpenCV Hough transforms tutorial](https://docs.opencv.org/4.10.0/d9/db0/tutorial_hough_lines.html).
+# - [`HoughLines()`](https://docs.opencv.org/4.10.0/dd/d1a/group__imgproc__feature.html#ga46b4e588934f6c8dfd509cc6e0e4545a)
+# - [`HoughLinesP()`](https://docs.opencv.org/4.10.0/dd/d1a/group__imgproc__feature.html#ga8618180a5948286384e3b7ca02f6feeb)
+# - [`HoughCircles()`](https://docs.opencv.org/4.10.0/dd/d1a/group__imgproc__feature.html#ga47849c3be0d0406ad3ca45db65a25d2d)
