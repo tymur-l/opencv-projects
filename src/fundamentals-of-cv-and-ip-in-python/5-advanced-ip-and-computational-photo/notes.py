@@ -89,7 +89,7 @@
 # 1) Capture the images with different exposure settings as described in the [HDR input section](#hdr-input).
 # 2) [Align the images](image-alignment).
 # 3) [Estimate Camera Response Function (CRF)](#estimate-camera-response-function-crf).
-# 4) [Linearize the image intensity using CRF](#linearize-the-image-intensity-using-crf).
+# 4) [Linearize the image intensity using the inverse CRF](#linearize-the-image-intensity-using-the-inverse-crf).
 # 5) [Merge linear images](#merge-linear-images).
 # 6) [Perform tone mapping](#perform-tone-mapping).
 #
@@ -105,33 +105,44 @@
 #
 # **Camera Response Function (CRF)** is an inherent property of each camera that can be described as a function. It determines how the _actual_ light intensity - physical analog values indicating intensity ("amount") of the ranges of wave lengths that correspond to red, green, and blue colors; one value for each channel - is transformed to the pixel intensity - 3 channels each in range of \[0-255\] - _measured_ by the camera. This function is not linear. That is, pixels' intensities on the same image captured by the camera do not vary proportionally. I.e. when an object is twice as brighter in the real world as another object, the brighter object may not be twice as brighter on the image.
 #
-# - TODO: If cameras captured intensities linearly, ... (the algorithm would be...)
+# If cameras captured intensities changed linearly, each pixel's intensity value would be directly proportional to the exposure time, except for the clipped pixels (i.e. pixels with values 0 or 1, because in this case the actual physical intensity is not captured - it causes the byte value to go out of bounds). The algorithm would estimate the brightness of each pixel by:
+#   1. Filtering the intensities that are clipped across all images.
+#   2. Dividing the remaining intensity values of the pixel by the corresponing exposure time.
+#   3. Combining the resulting values for the pixel in a specific way <sup>\[[crf-calibrate-dm]\]</sup><sup>\[[crf-calibrate-rbs]\]</sup>.
 #
-# Thankfully, we can estimate the CRF from the provided images if we know exposure time of each image (usually, the camera saves this to the image metadata section of the image file). We can use CRF estimation to calulate the inverse CRF function - when this fucntion is applied to an intensity of a corresponding channel (i.e. value in the range \[0-255\]), it returns the "actual" estimated intensity for the pixel, such that the resulting intensities vary linearly for the respective non linear measures. Calibration is per channel because each channel on the sensor can have different sensitivities.
+# Thankfully, we can estimate the CRF from the provided images if we know exposure time of each image (usually, the camera saves this to the image metadata section of the image file). We can use CRF estimation to calulate the inverse CRF function - when this fucntion is applied to an intensity of a corresponding channel (i.e. value in the range \[0-255\]), it returns the "actual" estimated intensity for the pixel, such that the resulting intensities vary linearly for the respective non linear measures. Calibration is per channel because each channel on the sensor can have different sensitivities. CV engineers should use [`cv::CalibrateDebevec`][opencv-calibrate-debevec] or [`cv::CalibrateRobertson`][opencv-calibrate-robertson] to find the inverse CRF.
 #
 # _This document intentionally omits the details for brievety. Find more details here <sup>\[[crf-calibrate-dm]\]</sup><sup>\[[crf-calibrate-rbs]\]</sup><sup>\[[opencv-calibrate-debevec]\]</sup><sup>\[[opencv-calibrate-robertson]\]</sup><sup>\[[opencv-create-calibrate-debevec]\]</sup><sup>\[[opencv-create-calibrate-robertson]\]</sup>._
 #
-# ##### Linearize the image intensity using CRF
+# ##### Linearize the image intensity using the inverse CRF
 #
 # Before (merging the images)[#merge-linear-images], the CV engineed must apply the [inverse CRF estimated in the previous section](#estimate-camera-response-function-crf) to each pixel to obtain an image where the pixel intensities vary linearly for each channel.
 #
 # ##### Merge linear images
 #
-# - [ ] TODO
-#   - TODO: After this step the channel values are no longer in [0, 255]. The transformation that maps such images to [0, 255] is called [**tone mapping**](#tone-mapping).
+# After [linearizing each image](#linearize-the-image-intensity-using-the-inverse-crf), the intensities will have different scales for each exposure setting. E.g. the pixel value of a 100 exposed for 2 seconds, is $\frac{1}{2}$ as intense as a pixel that is 100 exposed for 1 second (it required more light to measure 100 when the sensor was exposed for a longer time compared to the less light required to measure 100 when measring for a shorter time). Therefore, the pixels can be brought to the same scale by dividing each pixel by the exposure time. CV engineers should use [`cv::MergeDebevec`][opencv-merge-debevec] or [`cv::MergeRobertson`][opencv-merge-robertson] to merge the images and apply the calulated CRF.
+#
+# After this step the channel values are no longer in [0, 255]. The transformation that maps such images to [0, 255] is called [**tone mapping**](#tone-mapping).
+#
+# _This document intentionally omits the details for brievety. Find more details here <sup>\[[crf-calibrate-dm]\]</sup><sup>\[[crf-calibrate-rbs]\]</sup><sup>\[[opencv-merge-debevec]\]</sup><sup>\[[opencv-merge-robertson]\]._
 #
 # ##### Perform tone mapping
 #
-# - [ ] TODO
-#   - TODO: there are multiple tone mapping algorithms because they are targeted for different purposes. For example, the algorithms may produce "realistic" images or "dramatic" images.
-#   - TODO: CV engineers should select the tone mapping algorithm that is appropriate for their context and image.
-#   - TODO: common parameters of tone mapping algorithms:
-#     - Gamma
-#     - Saturation
-#     - Contrast
-#   - OpenCV tone mapping algorithms are aimed at producing "realistic" images.
+# **Tone mapping** is an algorithm that map high-dynamic range image to 8-bits per channel image. There are multiple tone mapping algorithms because they are targeted for different purposes. For example, the algorithms may produce "realistic" images or "dramatic" images. CV engineers should select the tone mapping algorithm that is appropriate for their context and image. OpenCV tone mapping algorithms are aimed at producing "realistic" images.
 #
-# <!-- TODO: take pictures with camera and insert them here -->
+# Common parameters of tone mapping algorithms:
+# - [Gamma ($\gamma$)][wiki-gamma-correction]:
+#   - $\gamma < 1$ - darkens the image.
+#   - $\gamma = 1$ - leaves the image as is.
+#   - $\gamma > 1$ - brightens the image.
+# - Saturation
+#   - Higher saturation means that the colors are more intense.
+#   - Saturation values near zero means that the colors are more faded/bleak (closer to grayscale).
+# - Contrast - $log(\frac{max(I)}{min(I)})$, where $I$ is the image.
+#
+# ### Example
+#
+# - [ ] TODO: take photos and apply HDR.
 #
 # ### Useful links
 #
@@ -139,6 +150,8 @@
 # - \[[opencv-align-mtb]\]
 # - \[[opencv-calibrate-debevec]\]
 # - \[[opencv-calibrate-robertson]\]
+# - \[[opencv-merge-debevec]\]
+# - \[[opencv-merge-robertson]\]
 # - \[[opencv-create-calibrate-debevec]\]
 # - \[[opencv-create-calibrate-robertson]\]
 # - \[[high-dynamic-range-imaging]\]
@@ -146,15 +159,19 @@
 # - \[[align-ward]\]
 # - \[[crf-calibrate-dm]\]
 # - \[[crf-calibrate-rbs]\]
+# - \[[wiki-gamma-correction]\]
 #
 # [opencv-tutorial-hdr]: <https://docs.opencv.org/4.10.0/d2/df0/tutorial_py_hdr.html> "OpenCV: High Dynamic Range (HDR)"
 # [opencv-align-mtb]: <https://docs.opencv.org/4.10.0/d7/db6/classcv_1_1AlignMTB.html> "cv::AlignMTB"
 # [opencv-calibrate-debevec]: <https://docs.opencv.org/4.10.0/da/d27/classcv_1_1CalibrateDebevec.html> "cv::CalibrateDebevec"
+# [opencv-calibrate-robertson]: <https://docs.opencv.org/4.x/d3/d30/classcv_1_1CalibrateRobertson.html> "cv::CalibrateRobertson"
+# [opencv-merge-debevec]: <https://docs.opencv.org/4.10.0/df/d62/classcv_1_1MergeDebevec.html> "cv:MergeDebevec"
+# [opencv-merge-robertson]: <https://docs.opencv.org/4.10.0/d7/d5b/classcv_1_1MergeRobertson.html> "cv::MergeRobertson"
 # [opencv-create-calibrate-debevec]: <https://docs.opencv.org/4.10.0/d6/df5/group__photo__hdr.html#ga670bbeecf0aac14abf386083a57b7958> "createCalibrateDebevec"
 # [opencv-create-calibrate-robertson]: <https://docs.opencv.org/4.10.0/d6/df5/group__photo__hdr.html#ga670bbeecf0aac14abf386083a57b7958> "createCalibrateRobertson"
-# [opencv-calibrate-robertson]: <https://docs.opencv.org/4.x/d3/d30/classcv_1_1CalibrateRobertson.html> "cv::CalibrateRobertson"
 # [high-dynamic-range-imaging]: <https://www.cl.cam.ac.uk/~rkm38/pdfs/mantiuk15hdri.pdf> "High Dynamic Range Imaging"
 # [debevec-course-hdri]: <https://www.cs.cmu.edu/afs/cs/academic/class/15462-s12/www/lec_slides/hdr.pdf> "Capturing, Representing, and Manipulating High Dynamic Range Imagery (HDRI)"
 # [align-ward]: <http://www.anyhere.com/gward/papers/jgtpap2.pdf> "Fast, Robust Image Registration for Compositing High Dynamic Range Photographs from Handheld Exposures"
 # [crf-calibrate-dm]: <https://www.pauldebevec.com/Research/HDR/debevec-siggraph97.pdf> "Recovering High Dynamic Range Radiance Maps from Photographs"
 # [crf-calibrate-rbs]: <https://ieeexplore.ieee.org/document/817091> "Dynamic range improvement through multiple exposures"
+# [wiki-gamma-correction]: <https://en.wikipedia.org/wiki/Gamma_correction> "Gamma correction"
