@@ -12,12 +12,12 @@ export FFMPEG_VERSION="7:4.4.2-0ubuntu0.22.04.1"
 
 apt update -y
 apt install -y --no-install-recommends \
-  libpng-dev=1.6.37-3build5 libjpeg-dev=8c-2ubuntu10 libopenexr-dev=2.5.7-1 libtiff-dev=4.3.0-6ubuntu0.8 \
+  libpng-dev=1.6.37-3build5 libjpeg-dev=8c-2ubuntu10 libopenexr-dev=2.5.7-1 libtiff-dev=4.3.0-6ubuntu0.10 \
   libwebp-dev=1.2.2-2ubuntu0.22.04.2 \
   \
-  libgstreamer-plugins-base1.0-dev=1.20.1-1ubuntu0.1 libgstreamer1.0-dev=1.20.3-0ubuntu1 \
+  libgstreamer-plugins-base1.0-dev=1.20.1-1ubuntu0.2 libgstreamer1.0-dev=1.20.3-0ubuntu1 \
   \
-  libgtk-3-dev=3.24.33-1ubuntu2.1 libgtkglext1-dev=1.2.0-11 \
+  libgtk-3-dev=3.24.33-1ubuntu2.2 libgtkglext1-dev=1.2.0-11 \
   \
   "libavutil-dev=${FFMPEG_VERSION}" \
   "libavcodec-dev=${FFMPEG_VERSION}" \
@@ -30,7 +30,7 @@ apt install -y --no-install-recommends \
 EOF
 
 # Copy Nvidia Codec SDK
-COPY ./deps/nvidia-codec-sdk/Lib/linux/stubs/x86_64/*.so /usr/local/cuda/lib64/
+COPY ./build/deps/nvidia-codec-sdk/Lib/linux/stubs/x86_64/*.so /usr/local/cuda/lib64/
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}/opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_cupti/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_nvcc/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_nvrtc/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_runtime/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cufft/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/curand/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cusolver/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cusparse/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/nccl/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/nvjitlink/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cublas/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_cupti/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_nvcc/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_nvrtc/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cuda_runtime/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cudnn/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cufft/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/curand/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cusolver/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/cusparse/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/nccl/lib/:/opt/conda/lib/python3.11/site-packages/nvidia/nvjitlink/lib/:/usr/local/cuda/lib64/"
 RUN echo "/usr/local/cuda/lib64" > /etc/ld.so.conf.d/nvidia-libs.conf
 
